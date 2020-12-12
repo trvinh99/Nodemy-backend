@@ -1,0 +1,37 @@
+{
+  "name": "nodemy-backend",
+  "version": "1.0.0",
+  "description": "Backend for Nodemy web app",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node .",
+    "dev": "env-cmd -f ./environment/dev.env nodemon src/app.js"
+  },
+  "keywords": [
+    "Express",
+    "MongoDB",
+    "Mongoose"
+  ],
+  "author": "group03",
+  "dependencies": {
+    "@sendgrid/mail": "^7.4.0",
+    "bcrypt": "^5.0.0",
+    "env-cmd": "^10.1.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongodb": "^3.6.3",
+    "mongoose": "^5.11.7",
+    "multer": "^1.4.2",
+    "sharp": "^0.26.3",
+    "validator": "^13.5.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.9",
+    "@types/mongoose": "^5.10.2",
+    "@types/validator": "^13.1.1",
+    "eslint": "^7.15.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "nodemon": "^2.0.6"
+  }
+}
