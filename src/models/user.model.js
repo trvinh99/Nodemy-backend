@@ -51,6 +51,26 @@ const userSchema = new mongoose.Schema({
       }
     },
   },
+  wishlist: [{
+    courseId: {
+      type: String,
+      trim: true,
+    },
+  }],
+  boughtCourses: [{
+    courseId: {
+      type: String,
+      trim: true,
+    },
+    currentWatchingVideo: {
+      type: String,
+      trim: true,
+    },
+    currentWatchingTimepoint: {
+      type: Number,
+      min: 0,
+    },
+  }],
 }, {
   timestamps: true,
 });
