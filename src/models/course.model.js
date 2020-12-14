@@ -29,11 +29,13 @@ const courseSchema = new mongoose.Schema({
   price: {
     type: Number,
     require: true,
+    min: 0,
   },
   sale: {
     type: Number,
     require: true,
     default: 0,
+    min: 0,
   },
   categories: [
     {
@@ -46,20 +48,42 @@ const courseSchema = new mongoose.Schema({
   isFinish: {
     type: Boolean,
     require: true,
+    default: false,
   },
   isPublic: {
     type: Boolean,
     require: true,
+    default: false,
   },
-  contents: {
-    type: String,
-    require: true,
-  },
-  ratings: {
-    type: String,
-    require: true,
-  },
+  sections: [
+    {
+      section: {
+        type: String,
+        require: true,
+      },
+    },
+  ],
+  ratings: [
+    {
+      rating: {
+        type: String,
+        require: true,
+      },
+    },
+  ],
 });
+
+courseSchema.methods.toJSON = function () {
+  const course = this;
+  const courseObj = course.toObject();
+
+  delete courseObj.sections;
+  delete courseObj.ratings;
+  delete courseObj.createAt;
+  delete courseObj.__v;
+
+  return courseObj;
+};
 
 const Course = mongoose.model("Course", courseSchema);
 module.exports = Course;
