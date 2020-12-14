@@ -51,6 +51,26 @@ const userSchema = new mongoose.Schema({
       }
     },
   },
+  wishlist: [{
+    courseId: {
+      type: String,
+      trim: true,
+    },
+  }],
+  boughtCourses: [{
+    courseId: {
+      type: String,
+      trim: true,
+    },
+    currentWatchingVideo: {
+      type: String,
+      trim: true,
+    },
+    currentWatchingTimepoint: {
+      type: Number,
+      min: 0,
+    },
+  }],
 }, {
   timestamps: true,
 });
@@ -71,7 +91,7 @@ userSchema.methods.toJSON = function () {
 userSchema.statics.generateAccessToken = async (refreshToken = '') => {
   const userId = await RefreshToken.validateRefreshToken(refreshToken);
   const user = await User.findById(userId);
-  const token = jwt.sign({ _id: user._id.toString(), email: user.email }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET, {
     expiresIn: "1800000", // 30 min in ms
   });
 
@@ -123,12 +143,7 @@ userSchema.statics.generateResetPasswordToken = async (email) => {
       throw new Error();
     }
 
-    const token = jwt.sign({
-      _id: user._id.toString(),
-      email: user.email,
-    }, process.env.JWT_SECRET, {
-      expiresIn: "600000", // 10 minutes in miliseconds
-    });
+    const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET, { expiresIn: "600000" });
 
     return token;
   }
