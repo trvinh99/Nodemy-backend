@@ -60,8 +60,8 @@ refreshTokenSchema.statics.validateRefreshToken = async (token = '') => {
     }
 
     const current = (new Date()).valueOf();
-    if (current >= refreshToken.expiredAt - 60000) {
-      await refreshToken.delete(); // delete if it is going to be expired soon
+    if (current > refreshToken.expiredAt) {
+      await refreshToken.delete();
       throw new Error();
     }
 

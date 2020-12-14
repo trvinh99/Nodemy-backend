@@ -51,15 +51,6 @@ const userSchema = new mongoose.Schema({
       }
     },
   },
-  resetPasswordToken: {
-    token: {
-      type: String,
-      trim: true,
-    },
-    createdAt: {
-      type: Number,
-    },
-  },
 }, {
   timestamps: true,
 });
@@ -124,6 +115,27 @@ userSchema.pre('save', async function (next) {
 
   next();
 });
+
+userSchema.statics.generateResetPasswordToken = async (email) => {
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new Error();
+    }
+
+    const token = jwt.sign({
+      _id: user._id.toString(),
+      email: user.email,
+    }, process.env.JWT_SECRET, {
+      expiresIn: "600000", // 10 minutes in miliseconds
+    });
+
+    return token;
+  }
+  catch {
+    throw new Error('Found no user');
+  }
+};
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;
