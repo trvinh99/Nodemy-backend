@@ -71,6 +71,21 @@ const userSchema = new mongoose.Schema({
       min: 0,
     },
   }],
+  isActivated: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+  activateToken: {
+    token: {
+      type: String,
+      minlength: 6,
+      maxlength: 6,
+    },
+    expiredAt: {
+      type: Number,
+    },
+  },
 }, {
   timestamps: true,
 });
@@ -143,7 +158,7 @@ userSchema.statics.generateResetPasswordToken = async (email) => {
       throw new Error();
     }
 
-    const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET, { expiresIn: "600000" });
+    const token = jwt.sign({ _id: user._id.toString(), usage: 'reset' }, process.env.JWT_SECRET, { expiresIn: "600000" });
 
     return token;
   }
