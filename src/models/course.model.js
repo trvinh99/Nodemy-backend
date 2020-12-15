@@ -60,6 +60,7 @@ const courseSchema = new mongoose.Schema({
       section: {
         type: String,
         require: true,
+        trim: true,
       },
     },
   ],
@@ -68,6 +69,7 @@ const courseSchema = new mongoose.Schema({
       rating: {
         type: String,
         require: true,
+        trim: true,
       },
     },
   ],
