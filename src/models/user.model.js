@@ -66,6 +66,10 @@ const userSchema = new mongoose.Schema({
       type: String,
       trim: true,
     },
+    currentWatchingTimepoint: {
+      type: Number,
+      min: 0,
+    },
   }],
 }, {
   timestamps: true,
