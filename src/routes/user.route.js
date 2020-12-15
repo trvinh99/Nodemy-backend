@@ -3,16 +3,21 @@ const express = require('express');
 const User = require('../models/user.model');
 const requestBodyValidation = require('../middlewares/requestBodyValidation.middleware');
 
-const registerRequest = require('../requests/register.request.json');
+const registerRequest = require('../requests/register.request');
 
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
+
+const userErrors = require('../responses/register.response');
 
 const userRoute = express.Router();
 
 userRoute.post('/users', requestBodyValidation(registerRequest), async (req, res) => {
   try {
-    const user = new User(req.body);
+    const user = new User({
+      ...req.body,
+      accountHost: 'Nodemy',
+    });
     await user.save();
 
     sendWelcome(req.body.email, req.body.fullname);
@@ -23,7 +28,7 @@ userRoute.post('/users', requestBodyValidation(registerRequest), async (req, res
   }
   catch (error) {
     res.status(400).send({
-      error: error.message,
+      error: userErrors.registerError(error),
     });
   }
 });

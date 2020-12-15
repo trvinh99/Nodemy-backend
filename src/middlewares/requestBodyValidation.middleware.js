@@ -1,18 +1,13 @@
-const Ajv = require('ajv');
-
-const requestBodyValidation = (schema) => (req, res, next) => {
-  const { message, ..._schema } = schema;
-
-  const validator = new Ajv({ allErrors: true });
-  const validate = validator.compile(_schema);
-  const valid = validate(req.body);
-  if (!valid) {
-    return res.status(400).send({
-      error: message,
+const requestBodyValidation = (validator) => (req, res, next) => {
+  try {
+    validator(req);
+    next();
+  }
+  catch (error) {
+    res.status(error.code).send({
+      error: error.message,
     });
   }
-
-  next();
 };
 
 module.exports = requestBodyValidation;
