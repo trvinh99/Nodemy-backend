@@ -47,10 +47,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     validate(value) {
-      if (value !== 'STUDENT' && value !== 'TEACHER' && value !== 'ADMIN') {
+      if (value !== 'Student' && value !== 'Teacher' && value !== 'Admin') {
         throw new Error('Account type is invalid!');
       }
     },
+    default: 'Student',
   },
   wishlist: [{
     courseId: {
