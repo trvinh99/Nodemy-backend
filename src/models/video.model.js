@@ -1,6 +1,13 @@
 const mongoose = require('mongoose');
 
+const Course = require('./course.model');
+
 const videoSchema = new mongoose.Schema({
+  courseId: {
+    type: String,
+    required: true,
+    trim: true,
+  },
   lectureId: {
     type: String,
     required: true,
@@ -25,8 +32,11 @@ videoSchema.methods.toJSON = function () {
   return videoObject;
 };
 
-videoSchema.post('save', async function (lecture) {
-  const updatedAt = { ...lecture };
+videoSchema.post('save', async function (video) {
+  const { updatedAt, courseId } = { ...video };
+  const course = await Course.findById(courseId);
+  course.updatedAt = updatedAt;
+  await course.save();
 });
 
 const Video = mongoose.model('Video', videoSchema);

@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const Course = require('./category.model');
+
 const courseSectionSchema = new mongoose.Schema({
   courseId: {
     type: String,
@@ -33,7 +35,10 @@ courseSectionSchema.methods.toJSON = function () {
 };
 
 courseSectionSchema.post('save', async function (section) {
-  const updatedAt = { ...section };
+  const { updatedAt, courseId } = { ...section };
+  const course = await Course.findById(courseId);
+  course.updatedAt = updatedAt;
+  await course.save();
 });
 
 const CourseSection = mongoose.model('CourseSection', courseSectionSchema);

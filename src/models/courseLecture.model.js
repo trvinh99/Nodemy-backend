@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const Course = require('./course.model');
+
 const courseLectureSchema = new mongoose.Schema({
   courseId: {
     type: String,
@@ -46,7 +48,10 @@ courseLectureSchema.methods.toJSON = function () {
 };
 
 courseLectureSchema.post('save', async function (lecture) {
-  const updatedAt = { ...lecture };
+  const { updatedAt, courseId } = { ...lecture };
+  const course = await Course.findById(courseId);
+  course.updatedAt = updatedAt;
+  await course.save();
 });
 
 const CourseLecture = mongoose.model('CourseLecture', courseLectureSchema);

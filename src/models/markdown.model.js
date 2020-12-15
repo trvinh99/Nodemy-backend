@@ -1,6 +1,13 @@
 const mongoose = require('mongoose');
 
+const Course = require('./course.model');
+
 const markdownSchema = new mongoose.Schema({
+  courseId: {
+    type: String,
+    trim: true,
+    required: true,
+  },
   lectureId: {
     type: String,
     trim: true,
@@ -26,8 +33,11 @@ markdownSchema.methods.toJSON = function () {
   return markdownObject;
 };
 
-markdownSchema.post('save', async function (lecture) {
-  const updatedAt = { ...lecture };
+markdownSchema.post('save', async function (markdown) {
+  const { updatedAt, courseId } = { ...markdown };
+  const course = await Course.findById(courseId);
+  course.updatedAt = updatedAt;
+  await course.save();
 });
 
 const Markdown = mongoose.model('Markdown', markdownSchema);
