@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
+const randToken = require('rand-token');
 
 const RefreshToken = require('./refreshToken.model');
 
@@ -165,6 +166,41 @@ userSchema.statics.generateResetPasswordToken = async (email) => {
   catch {
     throw new Error('Found no user');
   }
+};
+
+userSchema.methods.generateActivateToken = async () => {
+  const user = this;
+  if (user.isActivated) {
+    throw new Error('Can not generate activate token for an activated user!');
+  }
+
+  const token = randToken.generate(6, '0123456789');
+  const expiredAt = (new Date()).valueOf() + 600000;
+
+  user.activateToken = { token, expiredAt };
+  await user.save();
+
+  return token;
+};
+
+userSchema.methods.validateActivateToken = async (token) => {
+  const user = this;
+  if (user.isActivated) {
+    return true;
+  }
+
+  if (user.activateToken.token !== token) {
+    throw new Error('Activate token is not correct!');
+  }
+
+  const current = (new Date()).valueOf();
+  if (current > user.activateToken.expiredAt) {
+    throw new Error('Activate token is expired!');
+  }
+
+  user.isActivated = true;
+  await user.save();
+  return true;
 };
 
 const User = mongoose.model('User', userSchema);
