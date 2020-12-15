@@ -1,7 +1,7 @@
 const express = require('express');
 
 const User = require('../models/user.model');
-const requestBodyValidation = require('../middlewares/requestBodyValidation.middleware');
+const requestValidation = require('../middlewares/requestValidation.middleware');
 
 const registerRequest = require('../requests/register.request');
 
@@ -12,7 +12,7 @@ const userErrors = require('../responses/register.response');
 
 const userRoute = express.Router();
 
-userRoute.post('/users', requestBodyValidation(registerRequest), async (req, res) => {
+userRoute.post('/users', requestValidation(registerRequest), async (req, res) => {
   try {
     const user = new User({
       ...req.body,

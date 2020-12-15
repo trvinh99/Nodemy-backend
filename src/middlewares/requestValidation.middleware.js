@@ -1,4 +1,4 @@
-const requestBodyValidation = (validator) => (req, res, next) => {
+const requestValidation = (validator) => (req, res, next) => {
   try {
     validator(req);
     next();
@@ -10,4 +10,4 @@ const requestBodyValidation = (validator) => (req, res, next) => {
   }
 };
 
-module.exports = requestBodyValidation;
+module.exports = requestValidation;
