@@ -41,5 +41,7 @@ categorySchema.methods.toJSON = function () {
   return categoryObject;
 };
 
+categorySchema.index({ name: 'text' });
+
 const Category = mongoose.model('Category', categorySchema);
 module.exports = Category;
