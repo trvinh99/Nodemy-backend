@@ -18,19 +18,14 @@ const courseLectureSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  lectureType: {
-    type: String,
+  video: {
+    type: Buffer,
     required: true,
-    validate(value) {
-      if (value !== 'Video' || value !== 'Markdown') {
-        throw new Error('Lecture type is invalid!');
-      }
-    },
   },
-  lectureContent: {
-    type: String,
+  canPreview: {
+    type: Boolean,
     required: true,
-    trim: true,
+    default: false,
   },
 }, {
   timestamps: true,
