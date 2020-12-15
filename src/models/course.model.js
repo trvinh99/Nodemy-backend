@@ -37,14 +37,12 @@ const courseSchema = new mongoose.Schema({
     default: 0,
     min: 0,
   },
-  categories: [
-    {
-      category: {
-        type: String,
-        trim: true,
-      },
+  categories: [{
+    category: {
+      type: String,
+      trim: true,
     },
-  ],
+  }],
   isFinish: {
     type: Boolean,
     require: true,
@@ -55,25 +53,21 @@ const courseSchema = new mongoose.Schema({
     require: true,
     default: false,
   },
-  sections: [
-    {
-      section: {
-        type: String,
-        require: true,
-        trim: true,
-      },
+  sections: [{
+    section: {
+      type: String,
+      require: true,
     },
-  ],
-  ratings: [
-    {
-      rating: {
-        type: String,
-        require: true,
-        trim: true,
-      },
+  }],
+  ratings: [{
+    rating: {
+      type: String,
+      require: true,
     },
-  ],
+  }],
 });
+
+courseSchema.index({ title: 'text' });
 
 courseSchema.methods.toJSON = function () {
   const course = this;
