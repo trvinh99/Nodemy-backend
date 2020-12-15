@@ -20,6 +20,7 @@
     "quotes": "off",
     "brace-style": ["warn", "stroustrup"],
     "no-use-before-define": "off",
-    "prefer-arrow-callback": "off"
+    "prefer-arrow-callback": "off",
+    "consistent-return": "off"
   }
 }
