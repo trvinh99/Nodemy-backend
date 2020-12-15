@@ -43,7 +43,7 @@ courseLectureSchema.methods.toJSON = function () {
 };
 
 courseLectureSchema.post('save', async function (lecture) {
-  const { updatedAt, courseId } = { ...lecture };
+  const { updatedAt, courseId } = lecture;
   const course = await Course.findById(courseId);
   course.updatedAt = updatedAt;
   await course.save();

@@ -35,7 +35,7 @@ courseSectionSchema.methods.toJSON = function () {
 };
 
 courseSectionSchema.post('save', async function (section) {
-  const { updatedAt, courseId } = { ...section };
+  const { updatedAt, courseId } = section;
   const course = await Course.findById(courseId);
   course.updatedAt = updatedAt;
   await course.save();
