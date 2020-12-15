@@ -14,6 +14,10 @@ app.get('/', (_, res) => {
   });
 });
 
+const userRoute = require('./routes/user.route');
+
+app.use(userRoute);
+
 const port = process.env.PORT || 8000;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
