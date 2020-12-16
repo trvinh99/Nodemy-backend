@@ -192,7 +192,10 @@ userSchema.statics.generateActivateToken = async (userId) => {
   user.activateToken = { token, expiredAt };
   await user.save();
 
-  return token;
+  return {
+    token,
+    email: user.email,
+  };
 };
 
 userSchema.statics.validateActivateToken = async (userId, token) => {
