@@ -1,34 +1,38 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const categorySchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-    unique: true,
-  },
-  description: {
-    type: String,
-    default: '',
-    trim: true,
-  },
-  parentCategory: {
-    type: String,
-    required: true,
-    default: '',
-    trim: true,
-  },
-  subCategories: [{
-    category: {
+const categorySchema = new mongoose.Schema(
+  {
+    name: {
       type: String,
       required: true,
-      default: '',
+      trim: true,
+      unique: true,
+    },
+    description: {
+      type: String,
+      default: "",
       trim: true,
     },
-  }],
-}, {
-  timestamps: true,
-});
+    parentCategory: {
+      type: String,
+      required: true,
+      default: "",
+      trim: true,
+    },
+    subCategories: [
+      {
+        category: {
+          type: String,
+          default: "",
+          trim: true,
+        },
+      },
+    ],
+  },
+  {
+    timestamps: true,
+  }
+);
 
 categorySchema.methods.toJSON = function () {
   const category = this;
@@ -41,7 +45,7 @@ categorySchema.methods.toJSON = function () {
   return categoryObject;
 };
 
-categorySchema.index({ name: 'text' });
+categorySchema.index({ name: "text" });
 
-const Category = mongoose.model('Category', categorySchema);
+const Category = mongoose.model("Category", categorySchema);
 module.exports = Category;
