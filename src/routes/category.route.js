@@ -12,11 +12,25 @@ const categoryRoute = express.Router();
 categoryRoute.get("/categories", authentication, async (req, res) => {
   try {
     const categories = await Category.find({ name: req.query.name });
-    console.log(categories);
     res.status(200).send(categories);
   } catch (error) {
     res.status(400).send({
       message: `'Get failed!'`,
+    });
+  }
+});
+
+categoryRoute.get("/categories/:id", authentication, async (req, res) => {
+  try {
+    const categoryId = req.params.id;
+
+    const category = await Category.findById(categoryId);
+    if (!category) throw new Error("Category is not exist");
+
+    res.status(200).send(category);
+  } catch (error) {
+    res.status(400).send({
+      message: `'Get  failed!'`,
     });
   }
 });
