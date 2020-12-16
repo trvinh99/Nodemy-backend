@@ -6,6 +6,7 @@ const RefreshToken = require('../models/refreshToken.model');
 
 const requestValidation = require('../middlewares/requestValidation.middleware');
 const authorization = require('../middlewares/authorization.middleware');
+const authentication = require('../middlewares/authentication.middleware');
 
 const registerRequest = require('../requests/register.request');
 const getActivateTokenRequest = require('../requests/getActivateToken.request');
@@ -26,6 +27,7 @@ userRoute.post('/users', requestValidation(registerRequest), async (req, res) =>
     const info = {
       email: req.body.email,
       password: req.body.password,
+      fullname: req.body.fullname,
       accountHost: 'Nodemy',
     };
     const user = new User(info);
@@ -116,7 +118,7 @@ userRoute.post('/users/login-with-google', requestValidation(loginGoogleRequest)
 
     if (!user) {
       const data = await downloader(response.data.picture);
-      const avatar = Buffer.from(data);
+      const avatar = Buffer.from(data, 'base64');
       userInfo.avatar = avatar;
       user = new User(userInfo);
       await user.save();
@@ -148,6 +150,38 @@ userRoute.post('/users/get-access-token', authorization, async (req, res) => {
   catch {
     res.status(500).send({
       error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.get('/users/me', authentication, (req, res) => {
+  try {
+    res.send({
+      user: req.user,
+    });
+  }
+  catch {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.get('/users/:id/avatar', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).send({
+        error: 'Found no user!',
+      });
+    }
+
+    res.set({ 'Content-Type': 'image' });
+    res.end(user.avatar, 'binary');
+  }
+  catch {
+    res.status(404).send({
+      error: 'Found no user!',
     });
   }
 });

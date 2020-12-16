@@ -12,7 +12,7 @@ const downloader = (url = '') => new Promise((resolve, reject) => {
       });
 
       response.on('end', () => {
-        resolve(data);
+        resolve(data.toString());
       });
 
       response.on('error', (err) => reject(new NodemyResponseError(500, err.message)));
