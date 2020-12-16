@@ -4,28 +4,28 @@ const NodemyResponseError = require('../utils/NodemyResponseError');
 
 const loginNodemyRequest = ({ body }) => {
   if (typeof body !== 'object') {
-    throw new NodemyResponseError('Type of body is invalid!');
+    throw new NodemyResponseError(401, 'Unable to login!');
   }
 
   const { email, password, ...rest } = body;
   if (Object.keys(rest).length !== 0) {
-    throw new NodemyResponseError('Login body is invalid!');
+    throw new NodemyResponseError(401, 'Unable to login!');
   }
 
   if (typeof email !== 'string') {
-    throw new NodemyResponseError('Type of email is invalid!');
+    throw new NodemyResponseError(401, 'Unable to login!');
   }
 
   if (typeof password !== 'string') {
-    throw new NodemyResponseError('Type of password is invalid!');
+    throw new NodemyResponseError(401, 'Unable to login!');
   }
 
   if (!isEmail(email)) {
-    throw new NodemyResponseError('Email is invalid!');
+    throw new NodemyResponseError(401, 'Unable to login!');
   }
 
   if (password.length < 8) {
-    throw new NodemyResponseError('Unable to login!');
+    throw new NodemyResponseError(401, 'Unable to login!');
   }
 };
 
