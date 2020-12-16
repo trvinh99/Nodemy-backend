@@ -13,6 +13,7 @@ const getActivateTokenRequest = require('../requests/getActivateToken.request');
 const verifyActivateTokenRequest = require('../requests/verifyActivateToken.request');
 const loginNodemyRequest = require('../requests/loginNodemy.request');
 const loginGoogleRequest = require('../requests/loginGoogle.request');
+const getAvatarRequest = require('../requests/getAvatar.request');
 
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
@@ -167,7 +168,7 @@ userRoute.get('/users/me', authentication, (req, res) => {
   }
 });
 
-userRoute.get('/users/:id/avatar', async (req, res) => {
+userRoute.get('/users/:id/avatar', requestValidation(getAvatarRequest), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
