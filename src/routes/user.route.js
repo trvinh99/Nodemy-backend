@@ -3,7 +3,9 @@ const axios = require('axios');
 
 const User = require('../models/user.model');
 const RefreshToken = require('../models/refreshToken.model');
+
 const requestValidation = require('../middlewares/requestValidation.middleware');
+const authorization = require('../middlewares/authorization.middleware');
 
 const registerRequest = require('../requests/register.request');
 const getActivateTokenRequest = require('../requests/getActivateToken.request');
@@ -120,13 +122,32 @@ userRoute.post('/users/login-with-google', requestValidation(loginGoogleRequest)
       await user.save();
     }
 
+    const refreshToken = await RefreshToken.generateRefreshToken(user);
+    const accessToken = await User.generateAccessToken(refreshToken.token);
+
     res.status(201).send({
       user,
+      refreshToken: refreshToken.token,
+      accessToken,
     });
   }
   catch (error) {
     res.status(401).send({
       error: 'Unable to login',
+    });
+  }
+});
+
+userRoute.post('/users/get-access-token', authorization, async (req, res) => {
+  try {
+    const accessToken = await User.generateAccessToken(req.refreshToken);
+    res.status(201).send({
+      accessToken,
+    });
+  }
+  catch {
+    res.status(500).send({
+      error: 'Internal Server Error',
     });
   }
 });

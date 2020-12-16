@@ -19,6 +19,7 @@ const authorization = async (req, res, next) => {
     }
 
     req.userId = accessData.userId;
+    req.refreshToken = token;
 
     next();
   }
