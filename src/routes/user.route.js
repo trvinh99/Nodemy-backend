@@ -4,6 +4,7 @@ const User = require('../models/user.model');
 const requestValidation = require('../middlewares/requestValidation.middleware');
 
 const registerRequest = require('../requests/register.request');
+const getActivateTokenRequest = require('../requests/getActivateToken.request');
 
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
@@ -33,20 +34,13 @@ userRoute.post('/users', requestValidation(registerRequest), async (req, res) =>
   }
 });
 
-userRoute.post('/users/:id/activateToken', async (req, res) => {
+userRoute.post('/users/:id/get-activate-token', requestValidation(getActivateTokenRequest), async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).send({
-        message: 'Found no user',
-      });
-    }
-
-    const token = await user.generateActivateToken();
-    sendActivateToken(user.email, token);
+    const { token, email } = await User.generateActivateToken(req.params.id);
+    sendActivateToken(email, token);
 
     res.status(201).send({
-      error: 'Activate token has been created!',
+      message: 'Activate token has been created!',
     });
   }
   catch (error) {
