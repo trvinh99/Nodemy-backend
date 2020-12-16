@@ -19,7 +19,7 @@ const userRoute = express.Router();
 userRoute.post('/users', requestValidation(registerRequest), async (req, res) => {
   try {
     const info = {
-      email: req.body.email.toLowerCase(),
+      email: req.body.email,
       password: req.body.password,
       accountHost: 'Nodemy',
     };
