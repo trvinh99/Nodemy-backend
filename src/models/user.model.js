@@ -9,6 +9,7 @@ const RefreshToken = require('./refreshToken.model');
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
+    lowercase: true,
     trim: true,
     unique: true,
     required: true,
@@ -96,6 +97,8 @@ userSchema.methods.toJSON = function () {
   const user = this;
   const userObject = user.toObject();
 
+  delete userObject.activateToken;
+  delete userObject.avatar;
   delete userObject.password;
   delete userObject.resetPasswordToken;
   delete userObject.createdAt;
@@ -213,6 +216,10 @@ userSchema.statics.validateActivateToken = async (userId, token) => {
 
   if (user.isActivated) {
     return true;
+  }
+
+  if (typeof user.activateToken !== 'object') {
+    throw new Error('Activate token is not generated!');
   }
 
   if (user.activateToken.token !== token) {
