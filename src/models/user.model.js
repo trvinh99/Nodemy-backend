@@ -105,6 +105,8 @@ userSchema.methods.toJSON = function () {
   delete userObject.updatedAt;
   delete userObject.__v;
 
+  userObject.avatar = `${process.env.HOST}/users/me/avatar`;
+
   return userObject;
 };
 
