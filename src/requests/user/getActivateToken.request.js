@@ -1,4 +1,4 @@
-const NodemyResponseError = require('../utils/NodemyResponseError');
+const NodemyResponseError = require('../../utils/NodemyResponseError');
 
 const getActivateTokenRequest = ({ params }) => {
   if (typeof params !== 'object') {
