@@ -5,6 +5,7 @@ const requestValidation = require('../middlewares/requestValidation.middleware')
 
 const registerRequest = require('../requests/register.request');
 const getActivateTokenRequest = require('../requests/getActivateToken.request');
+const verifyActivateTokenRequest = require('../requests/verifyActivateToken.request');
 
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
@@ -41,6 +42,20 @@ userRoute.post('/users/:id/get-activate-token', requestValidation(getActivateTok
 
     res.status(201).send({
       message: 'Activate token has been created!',
+    });
+  }
+  catch (error) {
+    res.status(400).send({
+      error: error.message,
+    });
+  }
+});
+
+userRoute.patch('/users/:id/verify-activate-token', requestValidation(verifyActivateTokenRequest), async (req, res) => {
+  try {
+    await User.validateActivateToken(req.params.id, req.body.token);
+    res.send({
+      message: 'Account has been verifed!',
     });
   }
   catch (error) {
