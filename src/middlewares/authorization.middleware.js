@@ -9,16 +9,9 @@ const authorization = async (req, res, next) => {
 
     token = token.replace('Bearer ', '');
 
-    const accessData = await RefreshToken.findOne({ token });
-    if (!accessData) {
-      throw new Error();
-    }
+    const userId = await RefreshToken.validateRefreshToken(token);
 
-    if ((new Date()).valueOf() > accessData.expiredAt) {
-      throw new Error();
-    }
-
-    req.userId = accessData.userId;
+    req.userId = userId;
     req.refreshToken = token;
 
     next();

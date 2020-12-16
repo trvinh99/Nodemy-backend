@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const sharp = require('sharp');
+const multer = require('multer');
 
 const User = require('../models/user.model');
 const RefreshToken = require('../models/refreshToken.model');
@@ -15,6 +16,7 @@ const verifyActivateTokenRequest = require('../requests/user/verifyActivateToken
 const loginNodemyRequest = require('../requests/user/loginNodemy.request');
 const loginGoogleRequest = require('../requests/user/loginGoogle.request');
 const getAvatarRequest = require('../requests/user/getAvatar.request');
+const updateProfileRequest = require('../requests/user/updateProfile.request');
 
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
@@ -161,9 +163,7 @@ userRoute.post('/users/get-access-token', authorization, async (req, res) => {
 
 userRoute.get('/users/me', authentication, (req, res) => {
   try {
-    res.send({
-      user: req.user,
-    });
+    res.send({ user: req.user });
   }
   catch {
     res.status(500).send({
@@ -188,6 +188,60 @@ userRoute.get('/users/:id/avatar', requestValidation(getAvatarRequest), async (r
     res.status(404).send({
       error: 'Found no user!',
     });
+  }
+});
+
+userRoute.delete('/users/logout', authorization, async (req, res) => {
+  try {
+    await RefreshToken.findOneAndDelete({ token: req.refreshToken });
+    res.status(204).send();
+  }
+  catch {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+const avatarUploader = multer({
+  limits: {
+    fileSize: 10000000, // 10MB
+  },
+  fileFilter(req, file, cb) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error('Please upload a valid image'));
+    }
+
+    cb(undefined, true);
+  },
+});
+
+userRoute.patch('/users/me/avatar', authentication, avatarUploader.single('avatar'), async (req, res) => {
+  try {
+    const buffer = await sharp(req.file.buffer).resize({
+      width: 150,
+      height: 150,
+    }).png().toBuffer();
+
+    req.user.avatar = buffer;
+    await req.user.save();
+
+    res.status(200).send({
+      user: req.user,
+    });
+  }
+  catch (error) {
+    res.status(400).send({
+      error: error.message,
+    });
+  }
+});
+
+userRoute.patch('/users/me', authentication, requestValidation(updateProfileRequest), async (req, res) => {
+  try {
+  }
+  catch {
+
   }
 });
 
