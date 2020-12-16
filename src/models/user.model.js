@@ -215,6 +215,10 @@ userSchema.statics.validateActivateToken = async (userId, token) => {
     return true;
   }
 
+  if (typeof user.activateToken !== 'object') {
+    throw new Error('Activate token is not generated!');
+  }
+
   if (user.activateToken.token !== token) {
     throw new Error('Activate token is not correct!');
   }
