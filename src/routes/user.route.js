@@ -1,5 +1,6 @@
 const express = require('express');
 const axios = require('axios');
+const sharp = require('sharp');
 
 const User = require('../models/user.model');
 const RefreshToken = require('../models/refreshToken.model');
@@ -8,12 +9,12 @@ const requestValidation = require('../middlewares/requestValidation.middleware')
 const authorization = require('../middlewares/authorization.middleware');
 const authentication = require('../middlewares/authentication.middleware');
 
-const registerRequest = require('../requests/register.request');
-const getActivateTokenRequest = require('../requests/getActivateToken.request');
-const verifyActivateTokenRequest = require('../requests/verifyActivateToken.request');
-const loginNodemyRequest = require('../requests/loginNodemy.request');
-const loginGoogleRequest = require('../requests/loginGoogle.request');
-const getAvatarRequest = require('../requests/getAvatar.request');
+const registerRequest = require('../requests/user/register.request');
+const getActivateTokenRequest = require('../requests/user/getActivateToken.request');
+const verifyActivateTokenRequest = require('../requests/user/verifyActivateToken.request');
+const loginNodemyRequest = require('../requests/user/loginNodemy.request');
+const loginGoogleRequest = require('../requests/user/loginGoogle.request');
+const getAvatarRequest = require('../requests/user/getAvatar.request');
 
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
@@ -118,8 +119,11 @@ userRoute.post('/users/login-with-google', requestValidation(loginGoogleRequest)
     }
 
     if (!user) {
-      const data = await downloader(response.data.picture);
-      const avatar = Buffer.from(data, 'base64');
+      let avatar = await downloader(response.data.picture);
+      avatar = await sharp(avatar).resize({
+        width: 150,
+        height: 150,
+      }).png().toBuffer();
       userInfo.avatar = avatar;
       user = new User(userInfo);
       await user.save();
@@ -177,7 +181,7 @@ userRoute.get('/users/:id/avatar', requestValidation(getAvatarRequest), async (r
       });
     }
 
-    res.set({ 'Content-Type': 'image' });
+    res.set({ 'Content-Type': 'image/png' });
     res.end(user.avatar, 'binary');
   }
   catch {

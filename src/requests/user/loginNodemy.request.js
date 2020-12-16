@@ -1,6 +1,6 @@
 const { isEmail } = require('validator');
 
-const NodemyResponseError = require('../utils/NodemyResponseError');
+const NodemyResponseError = require('../../utils/NodemyResponseError');
 
 const loginNodemyRequest = ({ body }) => {
   if (typeof body !== 'object') {
