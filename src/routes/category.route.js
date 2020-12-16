@@ -4,10 +4,22 @@ const authentication = require("../middlewares/authentication.middleware");
 const Category = require("../models/category.model");
 const requestValidation = require("../middlewares/requestValidation.middleware");
 
-const createCategoryRequest = require("../requests/createCategory.request");
-const updateCategoryRequest = require("../requests/updateCategory.request");
+const createCategoryRequest = require("../requests/category/createCategory.request");
+const updateCategoryRequest = require("../requests/category/updateCategory.request");
 
 const categoryRoute = express.Router();
+
+categoryRoute.get("/categories", authentication, async (req, res) => {
+  try {
+    const categories = await Category.find({ name: req.query.name });
+    console.log(categories);
+    res.status(200).send(categories);
+  } catch (error) {
+    res.status(400).send({
+      message: `'Get failed!'`,
+    });
+  }
+});
 
 categoryRoute.post(
   "/categories",
@@ -15,7 +27,9 @@ categoryRoute.post(
   requestValidation(createCategoryRequest),
   async (req, res) => {
     try {
-      const category = req.body;
+      const categoryReq = req.body;
+      console.log(categoryReq);
+      const category = new Category(categoryReq);
 
       await category.save();
 
@@ -32,17 +46,15 @@ categoryRoute.post(
 
 categoryRoute.delete("/categories/:id", authentication, async (req, res) => {
   try {
-    const CategoryId = req.params.id;
+    const categoryId = req.params.id;
 
-    const category = Category.findById(CategoryId);
+    const category = await Category.findByIdAndDelete(categoryId);
     if (!category) {
       throw new Error("Category is not exist!");
     }
 
-    await Category.deleteOne({ _id: category.id });
-
     res.status(200).send({
-      message: `Category ${CategoryId} has been deleted`,
+      message: `Category ${categoryId} has been deleted`,
     });
   } catch (error) {
     res.status(400).send({
@@ -57,18 +69,18 @@ categoryRoute.patch(
   requestValidation(updateCategoryRequest),
   async (req, res) => {
     try {
-      const CategoryId = req.params.id;
-      const updateCategory = req.body;
-      const category = await Category.findOneAndUpdate(
-        { _id: CategoryId },
-        updateCategory
-      );
+      const categoryId = req.params.id;
+      const update = req.body;
+
+      const category = await Category.findByIdAndUpdate(categoryId, update, {
+        upsert: true,
+      });
       if (!category) {
         throw new Error("Category is not exist!");
       }
 
       res.status(200).send({
-        message: `Category ${CategoryId} has been updated!`,
+        message: `Category ${categoryId} has been updated!`,
       });
     } catch (error) {
       res.status(400).send({

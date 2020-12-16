@@ -1,15 +1,15 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
-const User = require('../models/user.model');
+const User = require("../models/user.model");
 
 const authentication = async (req, res, next) => {
   try {
-    let token = req.header('Nodemy-Authentication');
-    if (!token || typeof token !== 'string') {
+    let token = req.header("Nodemy-Authentication");
+    if (!token || typeof token !== "string") {
       throw new Error();
     }
 
-    token = token.replace('Bearer ', '');
+    token = token.replace("Bearer ", "");
 
     const decode = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decode._id);
@@ -20,12 +20,10 @@ const authentication = async (req, res, next) => {
 
     req.accessToken = token;
     req.user = user;
-
     next();
-  }
-  catch {
+  } catch {
     res.status(403).send({
-      error: 'Please authenticate!',
+      error: "Please authenticate!",
     });
   }
 };

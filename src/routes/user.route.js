@@ -1,25 +1,34 @@
 const express = require('express');
+const axios = require('axios');
 
 const User = require('../models/user.model');
+const RefreshToken = require('../models/refreshToken.model');
+
 const requestValidation = require('../middlewares/requestValidation.middleware');
+const authorization = require('../middlewares/authorization.middleware');
 
 const registerRequest = require('../requests/register.request');
 const getActivateTokenRequest = require('../requests/getActivateToken.request');
 const verifyActivateTokenRequest = require('../requests/verifyActivateToken.request');
+const loginNodemyRequest = require('../requests/loginNodemy.request');
+const loginGoogleRequest = require('../requests/loginGoogle.request');
 
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
 
 const userErrors = require('../responses/register.response');
+const downloader = require('../utils/downloader');
 
 const userRoute = express.Router();
 
 userRoute.post('/users', requestValidation(registerRequest), async (req, res) => {
   try {
-    const user = new User({
-      ...req.body,
+    const info = {
+      email: req.body.email,
+      password: req.body.password,
       accountHost: 'Nodemy',
-    });
+    };
+    const user = new User(info);
     await user.save();
 
     sendWelcome(req.body.email, req.body.fullname);
@@ -61,6 +70,84 @@ userRoute.patch('/users/:id/verify-activate-token', requestValidation(verifyActi
   catch (error) {
     res.status(400).send({
       error: error.message,
+    });
+  }
+});
+
+userRoute.post('/users/login-with-nodemy', requestValidation(loginNodemyRequest), async (req, res) => {
+  try {
+    const user = await User.findByCredentials(req.body.email.toLowerCase(), req.body.password);
+    const refreshToken = await RefreshToken.generateRefreshToken(user);
+    const accessToken = await User.generateAccessToken(refreshToken.token);
+
+    res.status(201).send({
+      user,
+      refreshToken: refreshToken.token,
+      accessToken,
+    });
+  }
+  catch (error) {
+    res.status(401).send({
+      error: 'Unable to login!',
+    });
+  }
+});
+
+userRoute.post('/users/login-with-google', requestValidation(loginGoogleRequest), async (req, res) => {
+  try {
+    const response = await axios.get('https://openidconnect.googleapis.com/v1/userinfo', {
+      headers: {
+        Authorization: `Bearer ${req.body.googleAccessToken}`,
+      },
+    });
+
+    const userInfo = {
+      email: response.data.email,
+      fullname: response.data.name,
+      accountHost: 'Google',
+    };
+
+    let user = await User.findOne({ email: userInfo.email });
+    if (user && user.accountHost === 'Nodemy') {
+      return res.status(401).send({
+        error: 'Unable to login!',
+      });
+    }
+
+    if (!user) {
+      const data = await downloader(response.data.picture);
+      const avatar = Buffer.from(data);
+      userInfo.avatar = avatar;
+      user = new User(userInfo);
+      await user.save();
+    }
+
+    const refreshToken = await RefreshToken.generateRefreshToken(user);
+    const accessToken = await User.generateAccessToken(refreshToken.token);
+
+    res.status(201).send({
+      user,
+      refreshToken: refreshToken.token,
+      accessToken,
+    });
+  }
+  catch (error) {
+    res.status(401).send({
+      error: 'Unable to login',
+    });
+  }
+});
+
+userRoute.post('/users/get-access-token', authorization, async (req, res) => {
+  try {
+    const accessToken = await User.generateAccessToken(req.refreshToken);
+    res.status(201).send({
+      accessToken,
+    });
+  }
+  catch {
+    res.status(500).send({
+      error: 'Internal Server Error',
     });
   }
 });

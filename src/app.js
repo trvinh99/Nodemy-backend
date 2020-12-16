@@ -10,7 +10,7 @@ app.use(cors);
 
 app.get("/", (_, res) => {
   res.send({
-    message: "Hello, World!!!",
+    message: "Welcome to Nodemy APIs service",
   });
 });
 
@@ -19,6 +19,10 @@ const categoryRoute = require("./routes/category.route");
 
 app.use(userRoute);
 app.use(categoryRoute);
+
+app.get("*", (_, res) => {
+  res.status(404).send();
+});
 
 const port = process.env.PORT || 8000;
 app.listen(port, () => {

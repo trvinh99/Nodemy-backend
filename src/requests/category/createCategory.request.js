@@ -1,4 +1,4 @@
-const NodemyResponseError = require("../utils/NodemyResponseError");
+const NodemyResponseError = require("../../utils/NodemyResponseError");
 
 const createCategoryRequest = ({ body }) => {
   if (typeof body !== "object") {
@@ -18,11 +18,17 @@ const createCategoryRequest = ({ body }) => {
   }
 
   if (typeof parentCategory !== "string") {
-    throw new NodemyResponseError(400, "Type of name is invalid!");
+    throw new NodemyResponseError(400, "Type of parentCategory is invalid!");
+  }
+  if (parentCategory.length < 24) {
+    throw new NodemyResponseError(
+      400,
+      "ParentCategory must contain 24 characters"
+    );
   }
 
   if (typeof description !== "string") {
-    throw new NodemyResponseError(400, "Type of name is invalid!");
+    throw new NodemyResponseError(400, "Type of description is invalid!");
   }
 };
 
