@@ -165,12 +165,23 @@ userSchema.statics.generateResetPasswordToken = async (email) => {
     return token;
   }
   catch {
-    throw new Error('Found no user');
+    throw new Error('Found no user!');
   }
 };
 
-userSchema.methods.generateActivateToken = async () => {
-  const user = this;
+userSchema.statics.generateActivateToken = async (userId) => {
+  let user;
+
+  try {
+    user = await User.findById(userId);
+    if (!user) {
+      throw new Error();
+    }
+  }
+  catch {
+    throw new Error('Found no user!');
+  }
+
   if (user.isActivated) {
     throw new Error('Can not generate activate token for an activated user!');
   }
@@ -184,8 +195,19 @@ userSchema.methods.generateActivateToken = async () => {
   return token;
 };
 
-userSchema.methods.validateActivateToken = async (token) => {
-  const user = this;
+userSchema.statics.validateActivateToken = async (userId, token) => {
+  let user;
+
+  try {
+    user = await User.findById(userId);
+    if (!user) {
+      throw new Error();
+    }
+  }
+  catch {
+    throw new Error('Found no user!');
+  }
+
   if (user.isActivated) {
     return true;
   }
@@ -200,6 +222,7 @@ userSchema.methods.validateActivateToken = async (token) => {
   }
 
   user.isActivated = true;
+  user.activateToken = undefined; // remove activateToken field from this user
   await user.save();
   return true;
 };
