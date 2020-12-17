@@ -23,7 +23,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
     required: true,
-    maxlength: 36,
+    minlength: 1,
+    maxlength: 64,
   },
   accountHost: {
     type: String,
