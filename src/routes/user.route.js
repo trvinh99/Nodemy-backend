@@ -3,6 +3,7 @@ const axios = require('axios');
 const sharp = require('sharp');
 const multer = require('multer');
 
+const TempUser = require('../models/tempUser.model');
 const User = require('../models/user.model');
 const RefreshToken = require('../models/refreshToken.model');
 
@@ -32,21 +33,16 @@ userRoute.post('/users', requestValidation(registerRequest), async (req, res) =>
       email: req.body.email,
       password: req.body.password,
       fullname: req.body.fullname,
-      accountHost: 'Nodemy',
     };
-    const user = new User(info);
-    await user.save();
-
-    sendWelcome(req.body.email, req.body.fullname);
+    const tempUser = new TempUser(info);
+    await tempUser.save();
 
     res.status(201).send({
       message: `Account ${req.body.email} has been created!`,
     });
   }
   catch (error) {
-    res.status(400).send({
-      error: userErrors.registerError(error),
-    });
+    userErrors.registerError(res, error);
   }
 });
 
