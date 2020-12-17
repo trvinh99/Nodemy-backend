@@ -16,13 +16,11 @@ app.get("/", (_, res) => {
 
 const userRoute = require("./routes/user.route");
 const categoryRoute = require("./routes/category.route");
+const courseRoute = require('./routes/category.route');
 
 app.use(userRoute);
 app.use(categoryRoute);
-
-app.get("*", (_, res) => {
-  res.status(404).send();
-});
+app.use(courseRoute);
 
 app.get('*', (_, res) => {
   res.status(404).send();
