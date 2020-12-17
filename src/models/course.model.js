@@ -65,6 +65,11 @@ const courseSchema = new mongoose.Schema({
       require: true,
     },
   }],
+  totalRegistered: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
 });
 
 courseSchema.index({ title: 'text' });
