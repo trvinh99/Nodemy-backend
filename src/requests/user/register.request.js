@@ -33,7 +33,7 @@ const registerRequest = ({ body }) => {
     throw new NodemyResponseError(400, 'Email is invalid!');
   }
 
-  if (!fullname) {
+  if (!fullname.trim()) {
     throw new NodemyResponseError(400, 'Fullname is empty!');
   }
 
