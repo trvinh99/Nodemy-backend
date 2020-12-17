@@ -1,4 +1,4 @@
-const NodemyResponseError = require("../utils/NodemyResponseError");
+const NodemyResponseError = require("../../utils/NodemyResponseError");
 
 const verifyActivateTokenRequest = ({ params, body }) => {
   if (typeof body !== 'object') {

@@ -1,17 +1,20 @@
 const express = require('express');
 const axios = require('axios');
+const sharp = require('sharp');
 
 const User = require('../models/user.model');
 const RefreshToken = require('../models/refreshToken.model');
 
 const requestValidation = require('../middlewares/requestValidation.middleware');
 const authorization = require('../middlewares/authorization.middleware');
+const authentication = require('../middlewares/authentication.middleware');
 
-const registerRequest = require('../requests/register.request');
-const getActivateTokenRequest = require('../requests/getActivateToken.request');
-const verifyActivateTokenRequest = require('../requests/verifyActivateToken.request');
-const loginNodemyRequest = require('../requests/loginNodemy.request');
-const loginGoogleRequest = require('../requests/loginGoogle.request');
+const registerRequest = require('../requests/user/register.request');
+const getActivateTokenRequest = require('../requests/user/getActivateToken.request');
+const verifyActivateTokenRequest = require('../requests/user/verifyActivateToken.request');
+const loginNodemyRequest = require('../requests/user/loginNodemy.request');
+const loginGoogleRequest = require('../requests/user/loginGoogle.request');
+const getAvatarRequest = require('../requests/user/getAvatar.request');
 
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
@@ -26,6 +29,7 @@ userRoute.post('/users', requestValidation(registerRequest), async (req, res) =>
     const info = {
       email: req.body.email,
       password: req.body.password,
+      fullname: req.body.fullname,
       accountHost: 'Nodemy',
     };
     const user = new User(info);
@@ -115,8 +119,11 @@ userRoute.post('/users/login-with-google', requestValidation(loginGoogleRequest)
     }
 
     if (!user) {
-      const data = await downloader(response.data.picture);
-      const avatar = Buffer.from(data);
+      let avatar = await downloader(response.data.picture);
+      avatar = await sharp(avatar).resize({
+        width: 150,
+        height: 150,
+      }).png().toBuffer();
       userInfo.avatar = avatar;
       user = new User(userInfo);
       await user.save();
@@ -148,6 +155,38 @@ userRoute.post('/users/get-access-token', authorization, async (req, res) => {
   catch {
     res.status(500).send({
       error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.get('/users/me', authentication, (req, res) => {
+  try {
+    res.send({
+      user: req.user,
+    });
+  }
+  catch {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.get('/users/:id/avatar', requestValidation(getAvatarRequest), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).send({
+        error: 'Found no user!',
+      });
+    }
+
+    res.set({ 'Content-Type': 'image/png' });
+    res.end(user.avatar, 'binary');
+  }
+  catch {
+    res.status(404).send({
+      error: 'Found no user!',
     });
   }
 });

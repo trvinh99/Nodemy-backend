@@ -23,7 +23,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
     required: true,
-    maxlength: 36,
+    minlength: 1,
+    maxlength: 64,
   },
   accountHost: {
     type: String,
@@ -104,6 +105,8 @@ userSchema.methods.toJSON = function () {
   delete userObject.createdAt;
   delete userObject.updatedAt;
   delete userObject.__v;
+
+  userObject.avatar = `${process.env.HOST}/users/${user._id.toString()}/avatar`;
 
   return userObject;
 };

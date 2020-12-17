@@ -10,7 +10,7 @@ app.use(cors);
 
 app.get("/", (_, res) => {
   res.send({
-    message: "Welcome to Nodemy APIs service",
+    message: 'Welcome to Nodemy APIs service',
   });
 });
 
@@ -21,6 +21,10 @@ app.use(userRoute);
 app.use(categoryRoute);
 
 app.get("*", (_, res) => {
+  res.status(404).send();
+});
+
+app.get('*', (_, res) => {
   res.status(404).send();
 });
 

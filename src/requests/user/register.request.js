@@ -1,6 +1,6 @@
 const validator = require('validator');
 
-const NodemyResponseError = require("../utils/NodemyResponseError");
+const NodemyResponseError = require("../../utils/NodemyResponseError");
 
 const registerRequest = ({ body }) => {
   if (typeof body !== 'object') {
