@@ -7,7 +7,7 @@ const requestValidation = require("../middlewares/requestValidation.middleware")
 const createCategoryRequest = require("../requests/category/createCategory.request");
 const updateCategoryRequest = require("../requests/category/updateCategory.request");
 
-const categoryError = require("../responses/category.response");
+const categoryError = require("../responses/category/category.response");
 
 const categoryRoute = express.Router();
 
