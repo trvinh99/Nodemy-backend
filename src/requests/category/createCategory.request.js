@@ -7,7 +7,7 @@ const createCategoryRequest = ({ body }) => {
       "Type of create category body is invalid!"
     );
   }
-  const { name, parentCategory, description, ...rest } = body;
+  const { name, parentCategory, description, subCategories, ...rest } = body;
 
   if (Object.keys(rest).length !== 0) {
     throw new NodemyResponseError(400, "Create category body is invalid!");
@@ -29,6 +29,10 @@ const createCategoryRequest = ({ body }) => {
 
   if (typeof description !== "string") {
     throw new NodemyResponseError(400, "Type of description is invalid!");
+  }
+
+  if (!Array.isArray(subCategories)) {
+    throw new NodemyResponseError(400, "Type of sub categories is invalid!");
   }
 };
 

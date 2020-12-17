@@ -7,6 +7,8 @@ const requestValidation = require("../middlewares/requestValidation.middleware")
 const createCategoryRequest = require("../requests/category/createCategory.request");
 const updateCategoryRequest = require("../requests/category/updateCategory.request");
 
+const categoryError = require("../responses/category.response");
+
 const categoryRoute = express.Router();
 
 categoryRoute.get("/categories", async (req, res) => {
@@ -44,12 +46,18 @@ categoryRoute.post(
     try {
       const category = new Category(req.body);
 
+      const parentCategory = await Category.findById(category.parentCategory);
+      if (parentCategory) {
+        parentCategory.subCategories.push(category._id);
+        parentCategory.save();
+      }
+
       await category.save();
 
       res.status(201).send({ category });
     } catch (error) {
       res.status(400).send({
-        error: `Create failed`,
+        error: categoryError.createCategoryError(error),
       });
     }
   }
@@ -108,7 +116,7 @@ categoryRoute.patch(
     } catch (error) {
       console.log(error.message);
       res.status(400).send({
-        error: `Update failed!`,
+        error: categoryError.updateCategoryError(error),
       });
     }
   }
