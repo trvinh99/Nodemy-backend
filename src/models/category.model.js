@@ -28,10 +28,9 @@ const categorySchema = new mongoose.Schema(
         },
       },
     ],
-  },
-  {
+  }, {
     timestamps: true,
-  }
+  },
 );
 
 categorySchema.methods.toJSON = function () {
