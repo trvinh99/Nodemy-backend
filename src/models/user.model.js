@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
-const randToken = require('rand-token');
 
 const RefreshToken = require('./refreshToken.model');
 
@@ -75,21 +74,6 @@ const userSchema = new mongoose.Schema({
       min: 0,
     },
   }],
-  isActivated: {
-    type: Boolean,
-    required: true,
-    default: false,
-  },
-  activateToken: {
-    token: {
-      type: String,
-      minlength: 6,
-      maxlength: 6,
-    },
-    expiredAt: {
-      type: Number,
-    },
-  },
 }, {
   timestamps: true,
 });
@@ -173,71 +157,6 @@ userSchema.statics.generateResetPasswordToken = async (email) => {
   catch {
     throw new Error('Found no user!');
   }
-};
-
-userSchema.statics.generateActivateToken = async (userId) => {
-  let user;
-
-  try {
-    user = await User.findById(userId);
-    if (!user) {
-      throw new Error();
-    }
-  }
-  catch {
-    throw new Error('Found no user!');
-  }
-
-  if (user.isActivated) {
-    throw new Error('Can not generate activate token for an activated user!');
-  }
-
-  const token = randToken.generate(6, '0123456789');
-  const expiredAt = (new Date()).valueOf() + 600000;
-
-  user.activateToken = { token, expiredAt };
-  await user.save();
-
-  return {
-    token,
-    email: user.email,
-  };
-};
-
-userSchema.statics.validateActivateToken = async (userId, token) => {
-  let user;
-
-  try {
-    user = await User.findById(userId);
-    if (!user) {
-      throw new Error();
-    }
-  }
-  catch {
-    throw new Error('Found no user!');
-  }
-
-  if (user.isActivated) {
-    return true;
-  }
-
-  if (typeof user.activateToken !== 'object') {
-    throw new Error('Activate token is not generated!');
-  }
-
-  if (user.activateToken.token !== token) {
-    throw new Error('Activate token is not correct!');
-  }
-
-  const current = (new Date()).valueOf();
-  if (current > user.activateToken.expiredAt) {
-    throw new Error('Activate token is expired!');
-  }
-
-  user.isActivated = true;
-  user.activateToken = undefined; // remove activateToken field from this user
-  await user.save();
-  return true;
 };
 
 const User = mongoose.model('User', userSchema);

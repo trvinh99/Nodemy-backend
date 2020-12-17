@@ -6,7 +6,7 @@ const NodemyResponseError = require('./NodemyResponseError');
 const downloader = (url = '') => new Promise((resolve, reject) => {
   https.request(url, (response) => {
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      let data = new Transform();
+      const data = new Transform();
 
       response.on('data', (chunk) => {
         data.push(chunk);
