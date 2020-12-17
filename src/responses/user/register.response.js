@@ -19,6 +19,4 @@ const registerError = (res, { code = 400, message = '' }) => {
   });
 };
 
-module.exports = {
-  registerError,
-};
+module.exports = registerError;

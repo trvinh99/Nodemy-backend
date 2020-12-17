@@ -17,17 +17,21 @@ const verifyActivateTokenRequest = require('../requests/user/verifyActivateToken
 const loginNodemyRequest = require('../requests/user/loginNodemy.request');
 const loginGoogleRequest = require('../requests/user/loginGoogle.request');
 const getAvatarRequest = require('../requests/user/getAvatar.request');
-const updateProfileRequest = require('../requests/user/updateProfile.request');
+const updateNodemyRequest = require('../requests/user/updateNodemy.request');
+const updateGoogleRequest = require('../requests/user/updateGoogle.request');
 
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
 
-const userErrors = require('../responses/register.response');
+const registerError = require('../responses/user/register.response');
+const updateError = require('../responses/user/update.response');
+
 const downloader = require('../utils/downloader');
 const NodemyResponseError = require('../utils/NodemyResponseError');
 
 const userRoute = express.Router();
 
+// Create new account
 userRoute.post('/users', requestValidation(registerRequest), async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
@@ -56,10 +60,11 @@ userRoute.post('/users', requestValidation(registerRequest), async (req, res) =>
     });
   }
   catch (error) {
-    userErrors.registerError(res, error);
+    registerError(res, error);
   }
 });
 
+// Confirm email
 userRoute.post('/users/:id/verify-activate-token', requestValidation(verifyActivateTokenRequest), async (req, res) => {
   try {
     const user = await TempUser.validateActivateToken(
@@ -78,6 +83,7 @@ userRoute.post('/users/:id/verify-activate-token', requestValidation(verifyActiv
   }
 });
 
+// Login with Nodemy account
 userRoute.post('/users/login-with-nodemy', requestValidation(loginNodemyRequest), async (req, res) => {
   try {
     const user = await User.findByCredentials(req.body.email.toLowerCase(), req.body.password);
@@ -97,6 +103,7 @@ userRoute.post('/users/login-with-nodemy', requestValidation(loginNodemyRequest)
   }
 });
 
+// Login with Google account
 userRoute.post('/users/login-with-google', requestValidation(loginGoogleRequest), async (req, res) => {
   try {
     const response = await axios.get('https://openidconnect.googleapis.com/v1/userinfo', {
@@ -145,6 +152,7 @@ userRoute.post('/users/login-with-google', requestValidation(loginGoogleRequest)
   }
 });
 
+// Get access token
 userRoute.post('/users/get-access-token', authorization, async (req, res) => {
   try {
     const accessToken = await User.generateAccessToken(req.refreshToken);
@@ -159,6 +167,7 @@ userRoute.post('/users/get-access-token', authorization, async (req, res) => {
   }
 });
 
+// Get own profile
 userRoute.get('/users/me', authentication, (req, res) => {
   try {
     res.send({ user: req.user });
@@ -170,6 +179,7 @@ userRoute.get('/users/me', authentication, (req, res) => {
   }
 });
 
+// Get avatar
 userRoute.get('/users/:id/avatar', requestValidation(getAvatarRequest), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -189,6 +199,7 @@ userRoute.get('/users/:id/avatar', requestValidation(getAvatarRequest), async (r
   }
 });
 
+// Logout
 userRoute.delete('/users/logout', authorization, async (req, res) => {
   try {
     await RefreshToken.findOneAndDelete({ token: req.refreshToken });
@@ -214,7 +225,7 @@ const avatarUploader = multer({
   },
 });
 
-userRoute.patch('/users/me/avatar', authentication, avatarUploader.single('avatar'), async (req, res) => {
+userRoute.patch('/users/avatar', authentication, avatarUploader.single('avatar'), async (req, res) => {
   try {
     const buffer = await sharp(req.file.buffer).resize({
       width: 150,
@@ -235,11 +246,45 @@ userRoute.patch('/users/me/avatar', authentication, avatarUploader.single('avata
   }
 });
 
-userRoute.patch('/users/me', authentication, requestValidation(updateProfileRequest), async (req, res) => {
+userRoute.patch('/users/update-with-nodemy/', authentication, requestValidation(updateNodemyRequest), async (req, res) => {
   try {
+    let hasChanged = false;
+
+    Object.keys(req.body).forEach((prop) => {
+      if (req.user[prop] !== req.body[prop]) {
+        hasChanged = true;
+        req.user[prop] = req.body[prop];
+      }
+    });
+
+    if (hasChanged) {
+      await req.user.save();
+    }
+
+    res.send({
+      user: req.user,
+    });
+  }
+  catch (error) {
+    updateError(res, error);
+  }
+});
+
+userRoute.patch('/users/update-with-google', authentication, requestValidation(updateGoogleRequest), async (req, res) => {
+  try {
+    if (req.body.fullname && req.user.fullname !== req.body.fullname) {
+      req.user.fullname = req.body.fullname;
+      await req.user.save();
+    }
+
+    res.send({
+      user: req.user,
+    });
   }
   catch {
-
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
   }
 });
 
