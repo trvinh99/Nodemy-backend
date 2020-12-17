@@ -8,6 +8,13 @@ const updateCategoryRequest = ({ params, body }) => {
     );
   }
 
+  if (typeof params !== "object") {
+    throw new NodemyResponseError(
+      400,
+      "Type of update category params is invalid!"
+    );
+  }
+
   if (params.id.length !== 24) {
     throw new NodemyResponseError(400, "Category ID must have 24 characters");
   }

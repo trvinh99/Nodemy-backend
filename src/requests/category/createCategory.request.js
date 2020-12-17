@@ -14,25 +14,28 @@ const createCategoryRequest = ({ body }) => {
   }
 
   if (typeof name !== "string") {
-    throw new NodemyResponseError(400, "Type of name is invalid!");
+    throw new NodemyResponseError(400, "Type of category's name is invalid!");
   }
 
   if (typeof parentCategory !== "string") {
-    throw new NodemyResponseError(400, "Type of parentCategory is invalid!");
+    throw new NodemyResponseError(400, "Type of parent category is invalid!");
   }
-  if (parentCategory.length < 24) {
-    throw new NodemyResponseError(
-      400,
-      "ParentCategory must contain 24 characters"
-    );
+  if (parentCategory.length !== 24) {
+    throw new NodemyResponseError(400, "Format of parent category is invalid!");
   }
 
   if (typeof description !== "string") {
-    throw new NodemyResponseError(400, "Type of description is invalid!");
+    throw new NodemyResponseError(
+      400,
+      "Type of category description is invalid!"
+    );
   }
 
   if (!Array.isArray(subCategories)) {
-    throw new NodemyResponseError(400, "Type of sub categories is invalid!");
+    throw new NodemyResponseError(
+      400,
+      "Type of category's sub categories is invalid!"
+    );
   }
 };
 

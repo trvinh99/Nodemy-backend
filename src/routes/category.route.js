@@ -47,10 +47,11 @@ categoryRoute.post(
       const category = new Category(req.body);
 
       const parentCategory = await Category.findById(category.parentCategory);
-      if (parentCategory) {
-        parentCategory.subCategories.push(category._id);
-        parentCategory.save();
+      if (!parentCategory) {
+        res.status(404).send({ error: "Found no parent category!" });
       }
+      parentCategory.subCategories.push({ category: category._id.toString() });
+      await parentCategory.save();
 
       await category.save();
 
