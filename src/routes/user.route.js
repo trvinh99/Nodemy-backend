@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const sharp = require('sharp');
 const multer = require('multer');
+const randToken = require('rand-token');
 
 const TempUser = require('../models/tempUser.model');
 const User = require('../models/user.model');
@@ -12,7 +13,6 @@ const authorization = require('../middlewares/authorization.middleware');
 const authentication = require('../middlewares/authentication.middleware');
 
 const registerRequest = require('../requests/user/register.request');
-const getActivateTokenRequest = require('../requests/user/getActivateToken.request');
 const verifyActivateTokenRequest = require('../requests/user/verifyActivateToken.request');
 const loginNodemyRequest = require('../requests/user/loginNodemy.request');
 const loginGoogleRequest = require('../requests/user/loginGoogle.request');
@@ -31,14 +31,22 @@ userRoute.post('/users', requestValidation(registerRequest), async (req, res) =>
   try {
     const info = {
       email: req.body.email,
-      password: req.body.password,
       fullname: req.body.fullname,
+      activateToken: randToken.generate(6, '0123456789'),
     };
     const tempUser = new TempUser(info);
     await tempUser.save();
+    sendActivateToken(info.email, info.activateToken);
+
+    setTimeout(() => {
+      try {
+        tempUser.delete();
+      }
+      catch { /** ignored */ }
+    }, 660000);
 
     res.status(201).send({
-      message: `Account ${req.body.email} has been created!`,
+      user: tempUser,
     });
   }
   catch (error) {
@@ -46,28 +54,16 @@ userRoute.post('/users', requestValidation(registerRequest), async (req, res) =>
   }
 });
 
-userRoute.post('/users/:id/get-activate-token', requestValidation(getActivateTokenRequest), async (req, res) => {
+userRoute.post('/users/:id/verify-activate-token', requestValidation(verifyActivateTokenRequest), async (req, res) => {
   try {
-    const { token, email } = await User.generateActivateToken(req.params.id);
-    sendActivateToken(email, token);
+    const user = await TempUser.validateActivateToken(
+      req.params.id,
+      req.body.token,
+      req.body.password,
+    );
 
-    res.status(201).send({
-      message: 'Activate token has been created!',
-    });
-  }
-  catch (error) {
-    res.status(400).send({
-      error: error.message,
-    });
-  }
-});
-
-userRoute.patch('/users/:id/verify-activate-token', requestValidation(verifyActivateTokenRequest), async (req, res) => {
-  try {
-    await User.validateActivateToken(req.params.id, req.body.token);
-    res.send({
-      message: 'Account has been verifed!',
-    });
+    sendWelcome(user.email, user.fullname);
+    res.status(201).send({ user });
   }
   catch (error) {
     res.status(400).send({

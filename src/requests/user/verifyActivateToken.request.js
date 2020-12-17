@@ -18,7 +18,7 @@ const verifyActivateTokenRequest = ({ params, body }) => {
     throw new NodemyResponseError(400, 'Format of user id is invalid!');
   }
 
-  const { token, ...rest } = body;
+  const { token, password, ...rest } = body;
   if (Object.keys(rest).length !== 0) {
     throw new NodemyResponseError(400, 'Verify activate token body is invalid!');
   }
@@ -29,6 +29,14 @@ const verifyActivateTokenRequest = ({ params, body }) => {
 
   if (token.length !== 6) {
     throw new NodemyResponseError(400, 'Format of activate token is invalid!');
+  }
+
+  if (typeof password !== 'string') {
+    throw new NodemyResponseError(400, 'Type of password is invalid!');
+  }
+
+  if (password.length < 8) {
+    throw new NodemyResponseError(400, 'Password must contain at least 8 characters!');
   }
 };
 

@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-const bcrypt = require('bcrypt');
+
+const NodemyResponseError = require('../utils/NodemyResponseError');
+
+const User = require('./user.model');
 
 const tempUserSchema = new mongoose.Schema({
   email: {
@@ -22,25 +25,53 @@ const tempUserSchema = new mongoose.Schema({
     minlength: 1,
     maxlength: 64,
   },
-  password: {
+  activateToken: {
     type: String,
-    trim: true,
-    minlength: 8,
+    required: true,
+    minlength: 6,
+    maxlength: 6,
   },
 }, {
   timestamps: true,
 });
 
-tempUserSchema.index({ createdAt: 1 }, { expireAfterSeconds: 600 });
+tempUserSchema.methods.toJSON = function () {
+  const tempUser = this;
+  const tempUserObj = tempUser.toObject();
 
-tempUserSchema.pre('save', async function (next) {
-  const user = this;
-  if (user.isModified('password')) {
-    user.password = await bcrypt.hash(user.password, 8);
+  delete tempUserObj.activateToken;
+  delete tempUserObj.createdAt;
+  delete tempUserObj.updatedAt;
+  delete tempUserObj.__v;
+
+  return tempUserObj;
+};
+
+tempUserSchema.statics.validateActivateToken = async (userId, token, password) => {
+  const tempUser = await TempUser.findById(userId);
+  if (!tempUser) {
+    throw new NodemyResponseError(400, 'Activate token is expired!');
   }
 
-  next();
-});
+  if (token !== tempUser.activateToken) {
+    throw new NodemyResponseError(400, 'Activate token is not correct!');
+  }
+
+  if ((new Date()).valueOf > (new Date(tempUser.createdAt)).valueOf() + 600000) {
+    throw new NodemyResponseError(400, 'Activate token is expired!');
+  }
+
+  const user = new User({
+    email: tempUser.email,
+    fullname: tempUser.fullname,
+    password,
+    accountHost: 'Nodemy',
+  });
+  await user.save();
+  await tempUser.delete();
+
+  return user;
+};
 
 const TempUser = mongoose.model('TempUser', tempUserSchema);
 module.exports = TempUser;

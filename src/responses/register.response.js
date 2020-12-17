@@ -1,19 +1,22 @@
-const registerError = (res, error) => {
-  if (typeof error.code === 'number') {
-    return res.status(error.code).send({
-      error: error.message,
+const registerError = (res, { code = 400, message = '' }) => {
+  if (typeof code === 'number'
+    && (code === 400 || code === 401 || code === 403 || code === 404 || code === 500)) {
+    return res.status(code).send({
+      error: message,
     });
   }
 
-  let errorMessage = error.message;
-  if (error.message.includes('required')) {
+  let errorMessage = message;
+  if (message.includes('required')) {
     errorMessage = "Register request's body is invalid!";
   }
-  else if (error.message.includes('duplicate')) {
+  else if (message.includes('duplicate')) {
     errorMessage = 'email is already exists';
   }
 
-  return errorMessage;
+  res.status(400).send({
+    error: errorMessage,
+  });
 };
 
 module.exports = {
