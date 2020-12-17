@@ -11,7 +11,7 @@ const registerError = (res, { code = 400, message = '' }) => {
     errorMessage = "Register request's body is invalid!";
   }
   else if (message.includes('duplicate')) {
-    errorMessage = 'email is already exists';
+    errorMessage = 'Email is already exists!';
   }
 
   res.status(400).send({

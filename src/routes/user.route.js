@@ -24,11 +24,17 @@ const sendActivateToken = require('../emails/sendActivateToken.email');
 
 const userErrors = require('../responses/register.response');
 const downloader = require('../utils/downloader');
+const NodemyResponseError = require('../utils/NodemyResponseError');
 
 const userRoute = express.Router();
 
 userRoute.post('/users', requestValidation(registerRequest), async (req, res) => {
   try {
+    const user = await User.findOne({ email: req.body.email });
+    if (user) {
+      throw new NodemyResponseError(400, 'Email is already exists!');
+    }
+
     const info = {
       email: req.body.email,
       fullname: req.body.fullname,
