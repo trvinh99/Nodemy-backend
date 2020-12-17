@@ -1,6 +1,6 @@
 const NodemyResponseError = require("../../utils/NodemyResponseError");
 
-const updateCategoryRequest = ({ body }) => {
+const updateCategoryRequest = ({ params, body }) => {
   if (typeof body !== "object") {
     throw new NodemyResponseError(
       400,
@@ -8,7 +8,11 @@ const updateCategoryRequest = ({ body }) => {
     );
   }
 
-  const { name, parentCategory, description, ...rest } = body;
+  if (params.id.length !== 24) {
+    throw new NodemyResponseError(400, "Category ID must have 24 characters");
+  }
+
+  const { name, parentCategory, description, subCategories, ...rest } = body;
 
   if (Object.keys(rest).length !== 0) {
     throw new NodemyResponseError(400, "Create category body is invalid!");
@@ -20,14 +24,17 @@ const updateCategoryRequest = ({ body }) => {
 
   if (
     parentCategory !== undefined &&
-    typeof parentCategory !== "string" &&
-    parentCategory.length !== 24
+    (typeof parentCategory !== "string" || parentCategory.length !== 24)
   ) {
     throw new NodemyResponseError(400, "Type of parent category is invalid!");
   }
 
   if (description !== undefined && typeof description !== "string") {
-    throw new NodemyResponseError(400, "Type of name is invalid!");
+    throw new NodemyResponseError(400, "Type of description is invalid!");
+  }
+
+  if (subCategories !== undefined && !Array.isArray(subCategories)) {
+    throw new NodemyResponseError(400, "Type of sub categories is invalid!");
   }
 };
 module.exports = updateCategoryRequest;

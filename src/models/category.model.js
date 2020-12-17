@@ -45,6 +45,23 @@ categorySchema.methods.toJSON = function () {
   return categoryObject;
 };
 
+categorySchema.methods.updateValueObj = function (req) {
+  const category = this;
+  category.name = req.body.name === undefined ? category.name : req.body.name;
+  category.description =
+    req.body.description === undefined
+      ? category.description
+      : req.body.description;
+  category.parentCategory =
+    req.body.parentCategory === undefined
+      ? category.parentCategory
+      : req.body.parentCategory;
+  category.subCategories =
+    req.body.subCategories.length === undefined
+      ? category.subCategories
+      : req.body.subCategories;
+};
+
 categorySchema.index({ name: "text" });
 
 const Category = mongoose.model("Category", categorySchema);

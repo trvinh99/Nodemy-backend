@@ -9,28 +9,29 @@ const updateCategoryRequest = require("../requests/category/updateCategory.reque
 
 const categoryRoute = express.Router();
 
-categoryRoute.get("/categories", authentication, async (req, res) => {
+categoryRoute.get("/categories", async (req, res) => {
   try {
     const categories = await Category.find({ name: req.query.name });
-    res.status(200).send(categories);
+    res.send({ categories });
   } catch (error) {
-    res.status(400).send({
-      message: `'Get failed!'`,
-    });
+    res.status(500).send({ error: "Internal Server Error" });
   }
 });
 
-categoryRoute.get("/categories/:id", authentication, async (req, res) => {
+categoryRoute.get("/categories/:id", async (req, res) => {
   try {
-    const categoryId = req.params.id;
+    if (req.params.id.length !== 24) {
+      throw new Error("Format of category id is invalid!");
+    }
+    const category = await Category.findById(req.params.id);
+    if (!category) {
+      res.status(404).send({ error: "Found no category!" });
+    }
 
-    const category = await Category.findById(categoryId);
-    if (!category) throw new Error("Category is not exist");
-
-    res.status(200).send(category);
+    res.send({ category });
   } catch (error) {
     res.status(400).send({
-      message: `'Get  failed!'`,
+      error: `Get failed!`,
     });
   }
 });
@@ -41,18 +42,14 @@ categoryRoute.post(
   requestValidation(createCategoryRequest),
   async (req, res) => {
     try {
-      const categoryReq = req.body;
-      console.log(categoryReq);
-      const category = new Category(categoryReq);
+      const category = new Category(req.body);
 
       await category.save();
 
-      res.status(201).send({
-        message: `Category ${req.body.name} has been created.`,
-      });
+      res.status(201).send({ category });
     } catch (error) {
       res.status(400).send({
-        message: `Create failed`,
+        error: `Create failed`,
       });
     }
   }
@@ -61,18 +58,25 @@ categoryRoute.post(
 categoryRoute.delete("/categories/:id", authentication, async (req, res) => {
   try {
     const categoryId = req.params.id;
-
-    const category = await Category.findByIdAndDelete(categoryId);
-    if (!category) {
-      throw new Error("Category is not exist!");
+    if (categoryId.length !== 24) {
+      throw new Error("Format of category id is invalid!");
     }
 
-    res.status(200).send({
-      message: `Category ${categoryId} has been deleted`,
-    });
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      res.status(404).send({ error: "Found no category" });
+    }
+    if (category.subCategories.length !== 0) {
+      res
+        .status(400)
+        .send({ error: "Can not delete category has sub categories" });
+    } else {
+      await Category.findByIdAndDelete(categoryId);
+      res.status(200).send({ category });
+    }
   } catch (error) {
     res.status(400).send({
-      message: `Delete failed!`,
+      error: `Delete failed!`,
     });
   }
 });
@@ -83,22 +87,28 @@ categoryRoute.patch(
   requestValidation(updateCategoryRequest),
   async (req, res) => {
     try {
-      const categoryId = req.params.id;
-      const update = req.body;
-
-      const category = await Category.findByIdAndUpdate(categoryId, update, {
-        upsert: true,
-      });
+      if (req.body.parentCategory !== undefined) {
+        const parentCategory = await Category.findById(req.body.parentCategory);
+        console.log(parentCategory);
+        if (!parentCategory) {
+          res.status(400).send({ error: "Found no parent category" });
+        }
+      }
+      const category = await Category.findById(req.params.id);
+      console.log(category);
       if (!category) {
-        throw new Error("Category is not exist!");
+        res.status(400).send({ error: "Found no category" });
       }
 
-      res.status(200).send({
-        message: `Category ${categoryId} has been updated!`,
-      });
+      category.updateValueObj(req);
+
+      await category.save();
+
+      res.status(200).send({ category });
     } catch (error) {
+      console.log(error.message);
       res.status(400).send({
-        message: `Update failed!`,
+        error: `Update failed!`,
       });
     }
   }
