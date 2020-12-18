@@ -4,7 +4,7 @@ const NodemyResponseError = require("../../utils/NodemyResponseError");
 
 const updateNodemyRequest = ({ body }) => {
   if (typeof body !== 'object') {
-    throw new NodemyResponseError(400, 'Type of update account\'s body is invalid!');
+    throw new NodemyResponseError(400, 'Type of update account\'s body must be object!');
   }
 
   const {
@@ -14,12 +14,12 @@ const updateNodemyRequest = ({ body }) => {
     ...rest
   } = body;
   if (Object.keys(rest).length !== 0) {
-    throw new NodemyResponseError(400, 'Update account\'s body is invalid!');
+    throw new NodemyResponseError(400, 'Update account\'s body has redundant field(s)!');
   }
 
   if (typeof email !== 'undefined') {
     if (typeof email !== 'string') {
-      throw new NodemyResponseError(400, 'Type of email is invalid!');
+      throw new NodemyResponseError(400, 'Type of email must be string!');
     }
 
     if (!isEmail(email)) {
@@ -29,7 +29,7 @@ const updateNodemyRequest = ({ body }) => {
 
   if (typeof password !== 'undefined') {
     if (typeof password !== 'string') {
-      throw new NodemyResponseError(400, 'Type of password is invalid!');
+      throw new NodemyResponseError(400, 'Type of password must be string!');
     }
 
     if (password.length < 8) {
@@ -39,11 +39,11 @@ const updateNodemyRequest = ({ body }) => {
 
   if (typeof fullname !== 'undefined') {
     if (typeof fullname !== 'string') {
-      throw new NodemyResponseError(400, 'Type of fullname is invalid!');
+      throw new NodemyResponseError(400, 'Type of fullname must be string!');
     }
 
     if (!fullname.trim()) {
-      throw new NodemyResponseError(400, 'Fullname is empty!');
+      throw new NodemyResponseError(400, 'Fullname is required!!');
     }
   }
 };
