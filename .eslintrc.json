@@ -21,6 +21,7 @@
     "brace-style": ["warn", "stroustrup"],
     "no-use-before-define": "off",
     "prefer-arrow-callback": "off",
-    "consistent-return": "off"
+    "consistent-return": "off",
+    "no-plusplus": "off"
   }
 }
