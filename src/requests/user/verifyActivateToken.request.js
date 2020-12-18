@@ -2,16 +2,16 @@ const NodemyResponseError = require("../../utils/NodemyResponseError");
 
 const verifyActivateTokenRequest = ({ params, body }) => {
   if (typeof body !== 'object') {
-    throw new NodemyResponseError(400, 'Type of body is invalid!');
+    throw new NodemyResponseError(400, 'Type of body must be object!');
   }
 
   if (typeof params !== 'object') {
-    throw new NodemyResponseError(400, 'Type of params is invalid!');
+    throw new NodemyResponseError(400, 'Type of params must be object!');
   }
 
   const { id } = params;
   if (typeof id !== 'string') {
-    throw new NodemyResponseError(400, 'Type of user id is invalid!');
+    throw new NodemyResponseError(400, 'Type of user id must be string!');
   }
 
   if (id.length !== 24) {
@@ -20,11 +20,11 @@ const verifyActivateTokenRequest = ({ params, body }) => {
 
   const { token, password, ...rest } = body;
   if (Object.keys(rest).length !== 0) {
-    throw new NodemyResponseError(400, 'Verify activate token body is invalid!');
+    throw new NodemyResponseError(400, 'Verify activate token body has redundant field(s)!');
   }
 
   if (typeof token !== 'string') {
-    throw new NodemyResponseError(400, 'Type of activate token is invalid!');
+    throw new NodemyResponseError(400, 'Type of activate token must be string!');
   }
 
   if (token.length !== 6) {
@@ -32,7 +32,7 @@ const verifyActivateTokenRequest = ({ params, body }) => {
   }
 
   if (typeof password !== 'string') {
-    throw new NodemyResponseError(400, 'Type of password is invalid!');
+    throw new NodemyResponseError(400, 'Type of password must be string!');
   }
 
   if (password.length < 8) {
