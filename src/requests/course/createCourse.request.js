@@ -13,42 +13,55 @@ const createCourseRequest = ({ body }) => {
     description,
     coverImage,
     price,
-    categories,
+    sale,
+    category,
     isFinish,
     isPublic,
     ...rest
   } = body;
 
   if (Object.keys(rest).length !== 0) {
-    throw new NodemyResponseError(400, 'Create course\'s body is invalid!');
+    throw new NodemyResponseError(400, 'Create course\'s body must be object!');
   }
 
   if (typeof title !== 'string') {
-    throw new NodemyResponseError(400, "Type of title is invalid!");
+    throw new NodemyResponseError(400, "Type of title must be string!");
   }
 
   if (!title.trim()) {
-    throw new NodemyResponseError(400, "Title is empty!");
+    throw new NodemyResponseError(400, "Title is required!");
+  }
+
+  if (title.trim().length > 60) {
+    throw new NodemyResponseError(400, "Title must not have more than 60 characters!");
   }
 
   if (typeof summary !== 'string') {
-    throw new NodemyResponseError(400, "Type of summary is invalid!");
+    throw new NodemyResponseError(400, "Type of summary must be string!");
   }
 
   if (!summary.trim()) {
-    throw new NodemyResponseError(400, "Summary is empty!");
+    throw new NodemyResponseError(400, "Summary is required!");
+  }
+
+  if (summary.trim().length > 400) {
+    throw new NodemyResponseError(400, "Summary must not have more than 400 characters!");
   }
 
   if (typeof description !== 'string') {
-    throw new NodemyResponseError(400, "Type of description is invalid!");
+    throw new NodemyResponseError(400, "Type of description must be string!");
   }
 
   if (!description.trim()) {
-    throw new NodemyResponseError(400, "Description is empty!");
+    throw new NodemyResponseError(400, "Description is required!");
+  }
+
+  if (description.trim().length > 1000) {
+    throw new NodemyResponseError(400, "Description must not have more than 1000 characters!");
   }
 
   if (typeof coverImage !== 'string') {
-    throw new NodemyResponseError(400, "Type of cover image is invalid!");
+    throw new NodemyResponseError(400, "Type of cover image must be string!");
   }
 
   if (!isURL(coverImage)) {
@@ -60,33 +73,35 @@ const createCourseRequest = ({ body }) => {
   }
 
   if (typeof price !== 'number') {
-    throw new NodemyResponseError(400, "Type of price is invalid!");
+    throw new NodemyResponseError(400, "Type of price must be number!");
   }
 
   if (price < 0) {
     throw new NodemyResponseError(400, "Price can not less than 0!");
   }
 
-  if (!Array.isArray(categories)) {
-    throw new NodemyResponseError(400, "Type of categories is invalid!");
+  if (typeof sale !== 'number') {
+    throw new NodemyResponseError(400, "Type of sale must be string!");
   }
 
-  categories.forEach((category) => {
-    if (typeof category !== 'string') {
-      throw new NodemyResponseError(400, "Type of category is invalid!");
-    }
+  if (price < 0) {
+    throw new NodemyResponseError(400, "Sale can not less than 0!");
+  }
 
-    if (categories.length !== 24) {
-      throw new NodemyResponseError(400, "Format of category is invalid!");
-    }
-  });
+  if (typeof category !== 'string') {
+    throw new NodemyResponseError(400, "Type of category is string!");
+  }
+
+  if (category.length !== 24) {
+    throw new NodemyResponseError(400, "Format of category is invalid!");
+  }
 
   if (typeof isFinish !== 'boolean') {
-    throw new NodemyResponseError(400, "Type of is finish is invalid!");
+    throw new NodemyResponseError(400, "Type of is finish must be boolean!");
   }
 
   if (typeof isPublic !== 'boolean') {
-    throw new NodemyResponseError(400, "Type of is public is invalid!");
+    throw new NodemyResponseError(400, "Type of is public must be boolean!");
   }
 };
 

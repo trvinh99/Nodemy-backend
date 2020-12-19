@@ -5,17 +5,22 @@ const courseSchema = new mongoose.Schema({
     type: String,
     require: true,
     trim: true,
-    unique: true,
+    minlength: 1,
+    maxlength: 60,
   },
   summary: {
     type: String,
     require: true,
     trim: true,
+    minlength: 1,
+    maxlength: 400,
   },
   description: {
     type: String,
     require: true,
     trim: true,
+    minlength: 1,
+    maxlength: 1000,
   },
   tutor: {
     type: String,
@@ -37,12 +42,10 @@ const courseSchema = new mongoose.Schema({
     default: 0,
     min: 0,
   },
-  categories: [{
-    category: {
-      type: String,
-      trim: true,
-    },
-  }],
+  category: {
+    type: String,
+    required: true,
+  },
   isFinish: {
     type: Boolean,
     require: true,
@@ -78,8 +81,6 @@ courseSchema.methods.toJSON = function () {
   const course = this;
   const courseObj = course.toObject();
 
-  delete courseObj.sections;
-  delete courseObj.ratings;
   delete courseObj.createAt;
   delete courseObj.__v;
 

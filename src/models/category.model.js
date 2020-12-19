@@ -28,6 +28,12 @@ const categorySchema = new mongoose.Schema(
         },
       },
     ],
+    totalCourses: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
   },
   {
     timestamps: true,
