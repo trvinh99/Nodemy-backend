@@ -43,12 +43,14 @@ categoryRoute.post("/categories", authentication, requestValidation(createCatego
   try {
     const category = new Category(req.body);
 
-    const parentCategory = await Category.findById(category.parentCategory);
-    if (!parentCategory) {
-      res.status(404).send({ error: "Found no parent category!" });
+    if (req.body.parentCategory) {
+      const parentCategory = await Category.findById(category.parentCategory);
+      if (!parentCategory) {
+        res.status(404).send({ error: "Found no parent category!" });
+      }
+      parentCategory.subCategories.push({ category: category._id.toString() });
+      await parentCategory.save();
     }
-    parentCategory.subCategories.push({ category: category._id.toString() });
-    await parentCategory.save();
 
     await category.save();
 

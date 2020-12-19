@@ -14,8 +14,6 @@ const categorySchema = new mongoose.Schema({
   },
   parentCategory: {
     type: String,
-    required: true,
-    default: "",
     trim: true,
   },
   subCategories: [{
