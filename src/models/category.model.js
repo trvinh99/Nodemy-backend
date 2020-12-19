@@ -1,37 +1,41 @@
 const mongoose = require("mongoose");
 
-const categorySchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-      unique: true,
-    },
-    description: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-    parentCategory: {
-      type: String,
-      required: true,
-      default: "",
-      trim: true,
-    },
-    subCategories: [
-      {
-        category: {
-          type: String,
-          default: "",
-          trim: true,
-        },
-      },
-    ],
-  }, {
-    timestamps: true,
+const categorySchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+    unique: true,
   },
-);
+  description: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+  parentCategory: {
+    type: String,
+    required: true,
+    default: "",
+    trim: true,
+  },
+  subCategories: [
+    {
+      category: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+    },
+  ],
+  totalCourses: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0,
+  },
+}, {
+  timestamps: true,
+});
 
 categorySchema.methods.toJSON = function () {
   const category = this;
