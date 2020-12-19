@@ -72,15 +72,32 @@ categoryRoute.delete("/categories/:id", authentication, async (req, res) => {
     if (!category) {
       res.status(404).send({ error: "Found no category" });
     }
+
     if (category.subCategories.length !== 0) {
-      res.status(400).send({
+      return res.status(400).send({
         error: "Can not delete category has sub categories",
       });
     }
-    else {
-      await Category.findByIdAndDelete(categoryId);
-      res.send({ category });
+
+    if (category.totalCourses > 0) {
+      return res.status(400).send({
+        error: 'Can not delete category has course(s)',
+      });
     }
+    
+    const parentCategory = await Category.findById(category.parentCategory);
+    if (!parentCategory) {
+      return res.status(404).send({
+        error: `Found no parent category with id ${category.parentCategory}`,
+      });
+    }
+    parentCategory.subCategories = parentCategory.subCategories.filter((subCategory) => 
+      subCategory.category !== category._id.toString());
+
+    await category.delete();
+    await parentCategory.save();
+
+    res.send({ category });
   }
   catch (error) {
     res.status(400).send({
@@ -91,20 +108,42 @@ categoryRoute.delete("/categories/:id", authentication, async (req, res) => {
 
 categoryRoute.patch("/categories/:id", authentication, requestValidation(updateCategoryRequest), async (req, res) => {
   try {
-    if (req.body.parentCategory !== undefined) {
+    const category = await Category.findById(req.params.id);
+    if (!category) {
+      res.status(404).send({ error: "Found no category" });
+    }
+
+    let hasChanged = false;
+
+    if (typeof req.body.name !== 'undefined' && category.name !== req.body.name) {
+      hasChanged = true;
+      category.name = req.body.name;
+    }
+
+    if (typeof req.body.description !== 'undefined' && category.description !== req.body.description) {
+      hasChanged = true;
+      category.description = req.body.description;
+    }
+
+    if (typeof req.body.parentCategory !== 'undefined' && category.parentCategory !== req.body.parentCategory) {
       const parentCategory = await Category.findById(req.body.parentCategory);
       if (!parentCategory) {
         res.status(404).send({ error: "Found no parent category" });
       }
-    }
-    const category = await Category.findById(req.params.id);
-    if (!category) {
-      res.status(400).send({ error: "Found no category" });
+
+      const oldParentCategory = await Category.findById(category.parentCategory);
+      oldParentCategory.subCategories = oldParentCategory.subCategories.filter((subCategory) =>
+        subCategory.category !== category._id.toString());
+      
+      parentCategory.subCategories.push({ category: category._id.toString() });
+      hasChanged = true;
+      await parentCategory.save();
+      await oldParentCategory.save();
     }
 
-    category.updateValueObj(req);
-
-    await category.save();
+    if (hasChanged) {
+      await category.save();
+    }
 
     res.send({ category });
   }
