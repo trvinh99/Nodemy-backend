@@ -13,6 +13,7 @@ const downloader = require('../utils/downloader');
 const NodemyResponseError = require('../utils/NodemyResponseError');
 
 const createCourseError = require('../responses/course/createCourse.response');
+const getListCoursesRequest = require('../requests/category/getListCourses.request');
 
 const courseRoute = express.Router();
 
@@ -57,6 +58,17 @@ courseRoute.post('/courses', authentication, teacher, requestValidation(createCo
   }
   catch (error) {
     createCourseError(res, error);
+  }
+});
+
+courseRoute.get('/courses', requestValidation(getListCoursesRequest), async (req, res) => {
+  try {
+    
+  }
+  catch {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
   }
 });
 
