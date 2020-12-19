@@ -24,6 +24,7 @@
     "prefer-arrow-callback": "off",
     "consistent-return": "off",
     "no-plusplus": "off",
-    "radix": "off"
+    "radix": "off",
+    "no-prototype-builtins": "off"
   }
 }
