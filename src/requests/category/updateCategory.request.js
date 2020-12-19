@@ -45,11 +45,5 @@ const updateCategoryRequest = ({ params, body }) => {
       throw new NodemyResponseError(400, 'Type of category\'s description must be string!');
     }
   }
-
-  if (subCategories !== undefined) {
-    if (!Array.isArray(subCategories)) {
-      throw new NodemyResponseError(400, 'Type of category\'s sub categories must be array!');
-    }
-  }
 };
 module.exports = updateCategoryRequest;

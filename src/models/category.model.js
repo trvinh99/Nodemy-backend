@@ -14,19 +14,15 @@ const categorySchema = new mongoose.Schema({
   },
   parentCategory: {
     type: String,
-    required: true,
-    default: "",
     trim: true,
   },
-  subCategories: [
-    {
-      category: {
-        type: String,
-        default: "",
-        trim: true,
-      },
+  subCategories: [{
+    category: {
+      type: String,
+      default: "",
+      trim: true,
     },
-  ],
+  }],
   totalCourses: {
     type: Number,
     required: true,
@@ -46,23 +42,6 @@ categorySchema.methods.toJSON = function () {
   delete categoryObject.updatedAt;
 
   return categoryObject;
-};
-
-categorySchema.methods.updateValueObj = function (req) {
-  const category = this;
-  category.name = req.body.name === undefined ? category.name : req.body.name;
-  category.description =
-    req.body.description === undefined
-      ? category.description
-      : req.body.description;
-  category.parentCategory =
-    req.body.parentCategory === undefined
-      ? category.parentCategory
-      : req.body.parentCategory;
-  category.subCategories =
-    req.body.subCategories.length === undefined
-      ? category.subCategories
-      : req.body.subCategories;
 };
 
 categorySchema.index({ name: "text" });
