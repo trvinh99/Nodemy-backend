@@ -3,14 +3,20 @@ const NodemyResponseError = require("../../utils/NodemyResponseError");
 const getListCoursesRequest = ({ query }) => {
   const queryKeys = Object.keys(query);
   queryKeys.forEach((key) => {
-    if (key !== 'name' && key !== 'page') {
+    if (key !== 'title' && key !== 'page' && key !== 'category') {
       throw new NodemyResponseError(400, 'Query has redundant field(s)!');
     }
   });
 
   if (typeof query.page !== 'undefined') {
-    if (parseInt(query.page).toString() === 'NaN') {
+    const pageNumber = parseInt(query.page);
+
+    if (pageNumber.toString() === 'NaN') {
       throw new NodemyResponseError(400, 'Page must be number!');
+    }
+
+    if (pageNumber <= 0) {
+      throw new NodemyResponseError(400, 'Page must be greater than 0!');
     }
   }
 };
