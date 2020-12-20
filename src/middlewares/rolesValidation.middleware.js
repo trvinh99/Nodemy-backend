@@ -8,7 +8,7 @@ const rolesValidation = (roles = []) => (req, res, next) => {
   }
 
   if (roles.includes(req.user.accountType)) {
-    next();
+    return next();
   }
 
   res.status(401).send({

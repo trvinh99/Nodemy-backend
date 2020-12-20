@@ -81,7 +81,7 @@ const createCourseRequest = ({ body }) => {
   }
 
   if (typeof sale !== 'number') {
-    throw new NodemyResponseError(400, "Type of sale must be string!");
+    throw new NodemyResponseError(400, "Type of sale must be number!");
   }
 
   if (price < 0) {

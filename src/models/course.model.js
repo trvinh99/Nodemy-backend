@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const Category = require('./category.model');
+
 const courseSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -38,9 +40,9 @@ const courseSchema = new mongoose.Schema({
   },
   sale: {
     type: Number,
-    require: true,
     default: 0,
     min: 0,
+    require: true,
   },
   category: {
     type: String,
@@ -70,8 +72,9 @@ const courseSchema = new mongoose.Schema({
   }],
   totalRegistered: {
     type: Number,
-    required: true,
     min: 0,
+    default: 0,
+    required: true,
   },
 });
 
@@ -81,10 +84,62 @@ courseSchema.methods.toJSON = function () {
   const course = this;
   const courseObj = course.toObject();
 
+  delete courseObj.coverImage;
   delete courseObj.createAt;
   delete courseObj.__v;
 
+  courseObj.coverImage = `${process.env.HOST}/courses/${course._id.toString()}/cover-image`;
+
   return courseObj;
+};
+
+courseSchema.statics.getListCourses = async (isPublic = true, page = 1, title, categoryName) => {
+  const coursesPerPage = 12;
+  const skip = coursesPerPage * (page - 1);
+
+  const selectedFields = '_id title summary tutor price sale category isFinish totalRegistered';
+
+  const query = {
+    isPublic,
+  };
+
+  if (title) {
+    query.title = {
+      $regex: new RegExp(`${title}`, 'i'),
+    };
+  }
+
+  if (categoryName) {
+    const categories = await Category.find({ name: { $regex: new RegExp(`${categoryName}`, 'i') } });
+    const rawNames = []
+    categories.forEach((category) => {
+      rawNames.push(`(${category._id.toString()})`);
+    });
+    query.category = {
+      $regex: new RegExp(`${rawNames.join('|')}`, 'i'),
+    };
+  }
+
+  const totalCourses = await Course.find(query).countDocuments();
+  const courses = await Course.find(query)
+  .select(selectedFields)
+  .skip(skip)
+  .limit(coursesPerPage);
+
+  for (let i = 0; i < courses.length; ++i) {
+    const foundCategoryName = (await Category.findById(courses[i].category)).name;
+    courses[i] = {
+      ...courses[i]._doc,
+      coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
+      categoryName: foundCategoryName,
+    };
+  }
+
+  return {
+    courses,
+    totalCourses,
+    totalPages: Math.ceil(totalCourses / coursesPerPage),
+  };
 };
 
 const Course = mongoose.model("Course", courseSchema);

@@ -13,17 +13,17 @@ const createCourseRequest = require('../requests/course/createCourse.request');
 const updateCourseRequest = require('../requests/course/updateCourse.request');
 const getCourseRequest = require('../requests/course/getCourse.request');
 const deleteCourseRequest = require('../requests/course/deleteCourse.request');
+const getListCoursesRequest = require('../requests/category/getListCourses.request');
+const getCourseCoverImageRequest = require('../requests/course/getCourseCoverImage.request');
 
 const downloader = require('../utils/downloader');
-
-const getListCoursesRequest = require('../requests/category/getListCourses.request');
 
 const courseRoute = express.Router();
 
 courseRoute.post('/courses', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(createCourseRequest), async (req, res) => {
   try {
-    let coverImage = downloader(req.body.coverImage);
-    coverImage = await sharp(req.body.coverImage).resize({
+    let coverImage = await downloader(req.body.coverImage);
+    coverImage = await sharp(coverImage).resize({
       height: 400,
       width: 600,
     }).png().toBuffer();
@@ -38,6 +38,7 @@ courseRoute.post('/courses', authentication, rolesValidation(['Teacher', 'Admin'
     const course = new Course({
       ...req.body,
       coverImage,
+      tutor: req.user._id.toString(),
     });
     await course.save();
 
@@ -57,44 +58,90 @@ courseRoute.post('/courses', authentication, rolesValidation(['Teacher', 'Admin'
 
 courseRoute.get('/courses', requestValidation(getListCoursesRequest), async (req, res) => {
   try {
-    const coursesPerPage = 12;
-    const page = req.query.page ? req.query.page : 1;
-    const skip = coursesPerPage * (page - 1);
+    const listCourses = await Course.getListCourses(true, req.query.page, req.query.title, req.query.category);
 
-    let listCourses = [];
-    let totalCourses = 0;
+    res.send(listCourses);
+  }
+  catch (error) {
+    console.log(error.message)
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
 
-    const selectedFields = '_id title summary tutor coverImage price sale categories isFinish totalRegistered';
+courseRoute.get('/courses/me', authentication, rolesValidation(['Teacher']), requestValidation(getListCoursesRequest), async (req, res) => {
+  try {
+    const selectedFields = '_id title summary tutor price sale category isFinish totalRegistered';
+    const courses = await Course.find({ tutor: req.user._id.toString() }).select(selectedFields);
+    res.send({
+      courses,
+    });
+  }
+  catch {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
 
-    if (req.query.name) {
-      totalCourses = await Course.find({
-        name: {
-          $regex: req.query.name,
-          $options: 'i',
-        },
-      })
-      .estimatedDocumentCount();
+courseRoute.get('/courses/admin', authentication, rolesValidation(['Admin']), requestValidation(getListCoursesRequest), async (req, res) => {
+  try {
+    const listCourses = await Course.getListCourses(false, req.query.page, req.query.title, req.query.category);
 
-      listCourses = await Course.findById({
-        name: {
-          $regex: req.query.name,
-          $options: 'i',
-        },
-      }, selectedFields)
-      .skip(skip)
-      .limit(coursesPerPage);
+    res.send(listCourses);
+  }
+  catch (error) {
+    console.log(error.message)
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+courseRoute.get('/courses/me/:id', authentication, rolesValidation(['Teacher']), requestValidation(getCourseRequest), async (req, res) => {
+  try {
+    const selectedFields = '_id title summary description tutor coverImage price sale category isPublic isFinish sections ratings totalRegistered';
+    const course = await Course.findById(req.params.id).select(selectedFields);
+    if (!course || course.tutor !== req.user._id.toString()) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
     }
-    else {
-      totalCourses = await Course.find({}).estimatedDocumentCount();
-      listCourses = await Course.findById({}, selectedFields)
-      .skip(skip)
-      .limit(coursesPerPage);
-    }
+
+    const category = (await Category.findById(course.category)).name;
 
     res.send({
-      listCourses,
-      totalCourses,
-      totalPages: Math.ceil(totalCourses / coursesPerPage),
+      course: {
+        ...course,
+        categoryName: category
+      },
+    });
+  }
+  catch {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+courseRoute.get('/courses/admin/:id', authentication, rolesValidation(['Admin']), requestValidation(getCourseRequest), async (req, res) => {
+  try {
+    const selectedFields = '_id title summary description tutor coverImage price sale category isPublic isFinish sections ratings totalRegistered';
+    const course = await Course.findById(req.params.id).select(selectedFields);
+    if (!course) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    const category = (await Category.findById(course.category)).name;
+
+    res.send({
+      course: {
+        ...course,
+        categoryName: category
+      },
     });
   }
   catch {
@@ -106,16 +153,23 @@ courseRoute.get('/courses', requestValidation(getListCoursesRequest), async (req
 
 courseRoute.get('/courses/:id', requestValidation(getCourseRequest), async (req, res) => {
   try {
-    const selectedFields = '_id title summary description tutor coverImage price sale categories isFinish sections ratings totalRegistered';
-    const course = await Course.findById(req.params.id, selectedFields);
-    if (!course) {
+    const selectedFields = '_id title summary description tutor coverImage price sale category isPublic isFinish sections ratings totalRegistered';
+    const course = await Course.findById(req.params.id).select(selectedFields);
+    if (!course || !course.isPublic) {
       return res.status(404).send({
         error: 'Found no course!',
       });
     }
 
+    const category = (await Category.findById(course.category)).name;
+    delete course.isPublic;
+
     res.send({
-      course,
+      course: {
+        ...course.toJSON(),
+        coverImage: `${process.env.HOST}/courses/${course._id.toString()}/cover-image`,
+        categoryName: category,
+      },
     });
   }
   catch {
@@ -125,7 +179,32 @@ courseRoute.get('/courses/:id', requestValidation(getCourseRequest), async (req,
   }
 });
 
-courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(updateCourseRequest), async (req, res) => {
+courseRoute.get('/courses/:id/cover-image', requestValidation(getCourseCoverImageRequest), async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    if (!course.isPublic) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    res.set({ 'Content-Type': 'image/png' });
+    res.end(course.coverImage, 'binary');
+  }
+  catch {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher']), requestValidation(updateCourseRequest), async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
     if (!course) {
@@ -144,7 +223,7 @@ courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher', 'A
     }
 
     if (req.body.coverImage) {
-      req.body.coverImage = downloader(req.body.coverImage);
+      req.body.coverImage = await downloader(req.body.coverImage);
       req.body.coverImage = await sharp(req.body.coverImage).resize({
         height: 400,
         width: 600,
