@@ -70,7 +70,7 @@ courseRoute.get('/courses', requestValidation(getListCoursesRequest), async (req
   }
 });
 
-courseRoute.get('/courses/me', authentication, rolesValidation(['Teacher']), requestValidation(getListCoursesRequest), async (req, res) => {
+courseRoute.get('/courses/me', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(getListCoursesRequest), async (req, res) => {
   try {
     const selectedFields = '_id title summary tutor price sale category isFinish totalRegistered';
     const courses = await Course.find({ tutor: req.user._id.toString() }).select(selectedFields);
@@ -99,7 +99,7 @@ courseRoute.get('/courses/admin', authentication, rolesValidation(['Admin']), re
   }
 });
 
-courseRoute.get('/courses/me/:id', authentication, rolesValidation(['Teacher']), requestValidation(getCourseRequest), async (req, res) => {
+courseRoute.get('/courses/me/:id', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(getCourseRequest), async (req, res) => {
   try {
     const selectedFields = '_id title summary description tutor coverImage price sale category isPublic isFinish sections ratings totalRegistered';
     const course = await Course.findById(req.params.id).select(selectedFields);
@@ -204,10 +204,10 @@ courseRoute.get('/courses/:id/cover-image', requestValidation(getCourseCoverImag
   }
 });
 
-courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher']), requestValidation(updateCourseRequest), async (req, res) => {
+courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(updateCourseRequest), async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
-    if (!course) {
+    if (!course || course.tutor !== req.user._id.toString()) {
       return res.status(404).send({
         error: 'Found no course!',
       });
@@ -257,7 +257,7 @@ courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher']), 
 courseRoute.delete('/courses/:id', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(deleteCourseRequest), async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
-    if (!course) {
+    if (!course || (req.user.role === 'Teacher' && req.user._id.toString() !== course.tutor)) {
       return res.status(404).send({
         error: 'Found no course!',
       });
