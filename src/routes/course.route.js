@@ -188,12 +188,6 @@ courseRoute.get('/courses/:id/cover-image', requestValidation(getCourseCoverImag
       });
     }
 
-    if (!course.isPublic) {
-      return res.status(404).send({
-        error: 'Found no course!',
-      });
-    }
-
     res.set({ 'Content-Type': 'image/png' });
     res.end(course.coverImage, 'binary');
   }
