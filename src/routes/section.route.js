@@ -19,7 +19,7 @@ sectionRoute.get('/sections/teacher/:courseId', authentication, rolesValidation(
     try {
         const course = await Course.findById(req.params.courseId);
         if (course.tutor !== req.user._id.toString()) {
-            res.status(404).send({ error: 'Found no course!'});
+            res.status(404).send({ error: 'Found no teacher!'});
         }
         
         const sections = await Section.find({ name: req.query.sectionName });
