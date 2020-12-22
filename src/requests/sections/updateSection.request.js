@@ -18,7 +18,7 @@ const updateSectionRequest = ({ body }) => {
         }
 
         if (sectionName.length > 200) {
-            throw new NodemyResponseError(400, "Section's name must contain less than 200 characters!");
+            throw new NodemyResponseError(400, "Section's name must not contain more than 200 characters!");
         }
     }
 };
