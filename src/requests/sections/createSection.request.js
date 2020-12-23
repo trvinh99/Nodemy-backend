@@ -7,7 +7,6 @@ const createSectionRequest = ({ body }) => {
   const {
     courseId,
     sectionName,
-    lectures,
     ...rest
   } = body;
 
@@ -21,12 +20,6 @@ const createSectionRequest = ({ body }) => {
 
   if (sectionName.length > 200) {
       throw new NodemyResponseError(400,"Section's name must not contain more than 200 characters!");
-  }
-
-  if (typeof lectures !== 'undefined') {
-    if (!Array.isArray(lectures)) {
-      throw new NodemyResponseError(400,"Type of section's lectures must be array!");
-    }
   }
 
   if (typeof courseId !== "string") {

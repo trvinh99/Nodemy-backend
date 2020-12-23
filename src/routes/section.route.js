@@ -22,7 +22,7 @@ sectionRoute.get('/sections/teacher/:courseId', authentication, rolesValidation(
             res.status(404).send({ error: `Found no course!` });
         }
 
-        const sections = await Section.find({ name: req.params.courseId });
+        const sections = await Section.find({ courseId: req.params.courseId });
 
         res.send({ sections }); 
     }
@@ -38,7 +38,7 @@ sectionRoute.get('/sections/:courseId', async (req, res) => {
             res.status(404).send({ error: `Found no course!` });
         }
 
-        const sections = await Section.find({ name: req.params.courseId });
+        const sections = await Section.find({ courseId: req.params.courseId });
 
         res.send({ sections });
     }
