@@ -15,6 +15,7 @@ const getCourseRequest = require('../requests/course/getCourse.request');
 const getListCoursesRequest = require('../requests/course/getListCourses.request');
 
 const downloader = require('../utils/downloader');
+const buyCourseRequest = require('../requests/course/buyCourse.request');
 
 const courseRoute = express.Router();
 
@@ -288,6 +289,48 @@ courseRoute.delete('/courses/:id', authentication, rolesValidation(['Teacher', '
   }
   catch (error) {
     res.status(400).send({
+      error: error.message,
+    });
+  }
+});
+
+courseRoute.patch('/courses/:id/buy', authentication, requestValidation(buyCourseRequest), async (req, res) => {
+  try {
+    for (let i = 0; i < req.user.boughtCourses.length; ++i) {
+      if (req.user.boughtCourses[i].courseId === req.params.id) {
+        return res.send({
+          message: 'You have already purchased this course!',
+        });
+      }
+    }
+
+    const course = await Course.findById(req.params.id);
+    if (!course || !course.isPublic) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    if (course.tutor === req.user._id.toString()) {
+      return res.send({
+        message: 'You own this course!',
+      });
+    }
+
+    ++course.totalRegistered;
+    req.user.boughtCourses.push({
+      courseId: course._id.toString(),
+    });
+
+    await course.save();
+    await req.user.save();
+
+    res.send({
+      message: 'You have purchased this course successfully!',
+    });
+  }
+  catch (error) {
+    res.status(500).send({
       error: error.message,
     });
   }
