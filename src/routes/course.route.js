@@ -12,9 +12,7 @@ const rolesValidation = require('../middlewares/rolesValidation.middleware');
 const createCourseRequest = require('../requests/course/createCourse.request');
 const updateCourseRequest = require('../requests/course/updateCourse.request');
 const getCourseRequest = require('../requests/course/getCourse.request');
-const deleteCourseRequest = require('../requests/course/deleteCourse.request');
 const getListCoursesRequest = require('../requests/course/getListCourses.request');
-const getCourseCoverImageRequest = require('../requests/course/getCourseCoverImage.request');
 
 const downloader = require('../utils/downloader');
 
@@ -59,7 +57,6 @@ courseRoute.post('/courses', authentication, rolesValidation(['Teacher', 'Admin'
 courseRoute.get('/courses', requestValidation(getListCoursesRequest), async (req, res) => {
   try {
     const listCourses = await Course.getListCourses(true, req.query.page, req.query.title, req.query.category);
-
     res.send(listCourses);
   }
   catch (error) {
@@ -70,7 +67,7 @@ courseRoute.get('/courses', requestValidation(getListCoursesRequest), async (req
   }
 });
 
-courseRoute.get('/courses/me', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(getListCoursesRequest), async (req, res) => {
+courseRoute.get('/courses/me', authentication, rolesValidation(['Teacher', 'Admin']), async (req, res) => {
   try {
     const selectedFields = '_id title summary tutor price sale category isFinish totalRegistered';
     const courses = await Course.find({ tutor: req.user._id.toString() }).select(selectedFields);
@@ -88,7 +85,6 @@ courseRoute.get('/courses/me', authentication, rolesValidation(['Teacher', 'Admi
 courseRoute.get('/courses/admin', authentication, rolesValidation(['Admin']), requestValidation(getListCoursesRequest), async (req, res) => {
   try {
     const listCourses = await Course.getListCourses(false, req.query.page, req.query.title, req.query.category);
-
     res.send(listCourses);
   }
   catch (error) {
@@ -179,7 +175,7 @@ courseRoute.get('/courses/:id', requestValidation(getCourseRequest), async (req,
   }
 });
 
-courseRoute.get('/courses/:id/cover-image', requestValidation(getCourseCoverImageRequest), async (req, res) => {
+courseRoute.get('/courses/:id/cover-image', requestValidation(getCourseRequest), async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
     if (!course) {
@@ -207,7 +203,7 @@ courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher', 'A
       });
     }
 
-    if (req.body.category) {
+    if (req.body.category && req.body.category !== course.category) {
       const category = await Category.findById(req.body.category);
       if (!category) {
         return res.status(404).send({
@@ -248,7 +244,7 @@ courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher', 'A
   }
 });
 
-courseRoute.delete('/courses/:id', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(deleteCourseRequest), async (req, res) => {
+courseRoute.delete('/courses/:id', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(getCourseRequest), async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
     if (!course || (req.user.role === 'Teacher' && req.user._id.toString() !== course.tutor)) {

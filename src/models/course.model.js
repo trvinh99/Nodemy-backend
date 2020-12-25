@@ -108,9 +108,10 @@ courseSchema.statics.getListCourses = async (isPublic = true, page = 1, title = 
 
   const selectedFields = '_id title summary tutor price sale category isFinish totalRegistered';
 
-  const query = {
-    isPublic,
-  };
+  const query = {};
+  if (isPublic) {
+    query.isPublic = true;
+  }
 
   if (typeof title === 'string' && title.trim().length > 0) {
     query.title = {
