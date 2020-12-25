@@ -288,4 +288,13 @@ userRoute.patch('/users/update-with-google', authentication, requestValidation(u
   }
 });
 
+userRoute.patch('/users/learning-process', authentication, async (req, res) => {
+  try {
+    
+  }
+  catch (error) {
+
+  }
+});
+
 module.exports = userRoute;
