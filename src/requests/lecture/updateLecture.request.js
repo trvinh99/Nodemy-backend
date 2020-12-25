@@ -1,27 +1,16 @@
-const NodemyResponseError = require("../../utils/NodemyResponseError");
+const { objectConstraints, isObjectId, stringConstraints, checkType } = require("../../utils/validator");
 
 const updateLecture = ({ body, params }) => {
-  const { lectureName, canPreview } = body;
-
-  const { id } = params;
-  if (id.length !== 24) {
-    throw new NodemyResponseError(400, 'Format of lecture\'s id is invalid!');
-  }
+  const { lectureName, canPreview } = objectConstraints(body, "Update lecture's body", ['lectureName', 'canPreview']);
+  const { id } = objectConstraints(params, "Update lecture's params", ['id']);
+  isObjectId(id, "lecture's id");
 
   if (typeof lectureName !== 'undefined') {
-    if (typeof lectureName !== 'string') {
-      throw new NodemyResponseError(400, 'Type of lecture\'s name must be string!');
-    }
-
-    if (lectureName.length > 100) {
-      throw new NodemyResponseError(400, 'Lecture\'s name must not contain more than 100 characters!');
-    }
+    stringConstraints(lectureName, "Lecture's name", { minLength: 1, maxLength: 100, isRequired: true });
   }
 
   if (typeof canPreview !== 'undefined') {
-    if (typeof canPreview !== 'boolean') {
-      throw new NodemyResponseError(400, 'Type of can preview must be boolean!');
-    }
+    checkType(canPreview, 'boolean', "can preview lecture");
   }
 };
 

@@ -1,4 +1,5 @@
 const NodemyResponseError = require("../../utils/NodemyResponseError");
+const { objectConstraints, isObjectId, stringConstraints } = require("../../utils/validator");
 
 const createLectureRequest = ({ body }) => {
   const {
@@ -6,19 +7,12 @@ const createLectureRequest = ({ body }) => {
     sectionId,
     lectureName,
     canPreview
-  } = body;
+  } = objectConstraints(body, "Create lecture's body", ['courseId', 'sectionId', 'lectureName', 'canPreview']);
 
-  if (courseId.length !== 24) {
-    throw new NodemyResponseError(400, 'Course\'s id is invalid!');
-  }
+  isObjectId(courseId, "course's id");
+  isObjectId(sectionId, "section's id");
 
-  if (sectionId.length !== 24) {
-    throw new NodemyResponseError(400, 'Section\'s id is invalid!');
-  }
-
-  if (lectureName.length > 200) {
-    throw new NodemyResponseError(400, 'Lecture\'s name can not contain more than 200 characters!');
-  }
+  stringConstraints(lectureName, "Lecture's name", { minLength: 1, maxLength: 100, isRequired: true });
 
   if (canPreview !== 'Yes' && canPreview !== 'No') {
     throw new NodemyResponseError(400, 'Can preview must be "Yes" or "No"!');
