@@ -17,6 +17,7 @@ const courseLectureSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
+    maxlength: 100,
   },
   video: {
     type: Buffer,
@@ -35,9 +36,12 @@ courseLectureSchema.methods.toJSON = function () {
   const courseLecture = this;
   const courseLectureObject = courseLecture.toObject();
 
+  delete courseLectureObject.video;
   delete courseLectureObject.createdAt;
   delete courseLectureObject.updatedAt;
   delete courseLectureObject.__v;
+
+  courseLectureObject.video = `${process.env.HOST}/lectures/${courseLecture._id.toString()}/video`;
 
   return courseLectureObject;
 };
