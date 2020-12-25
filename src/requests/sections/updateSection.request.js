@@ -1,4 +1,3 @@
-const NodemyResponseError = require("../../utils/NodemyResponseError");
 const { objectConstraints, isObjectId, stringConstraints } = require("../../utils/validator");
 
 const updateSectionRequest = ({ params, body }) => {

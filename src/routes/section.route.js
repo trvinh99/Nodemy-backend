@@ -20,7 +20,7 @@ sectionRoute.get('/sections/me/:courseId', authentication, rolesValidation(['Tea
   try {
     const course = await Course.findById(req.params.courseId);
     if (!course || course.tutor !== req.user._id.toString()) {
-      res.status(404).send({ error: `Found no course!` });
+      return res.status(404).send({ error: `Found no course!` });
     }
 
     const sections = await Section.find({ courseId: req.params.courseId });
@@ -36,7 +36,7 @@ sectionRoute.get('/sections/:courseId', requestValidation(getSectionsRequest), a
   try {
     const course = await Course.findById(req.params.courseId);
     if (!course || !course.isPublic) {
-      res.status(404).send({ error: `Found no course!` });
+      return res.status(404).send({ error: `Found no course!` });
     }
 
     const sections = await Section.find({ courseId: req.params.courseId });
@@ -52,7 +52,7 @@ sectionRoute.post('/sections', authentication, rolesValidation(['Teacher', 'Admi
   try {
     const course = await Course.findById(req.body.courseId);
     if (!course || course.tutor !== req.user._id.toString()) {
-      res.status(404).send({ error: `Found no course with id ${req.body.courseId}!` });
+      return res.status(404).send({ error: `Found no course with id ${req.body.courseId}!` });
     }
 
     const section = new Section(req.body);
@@ -71,12 +71,12 @@ sectionRoute.delete('/sections/:id', authentication, rolesValidation(['Teacher',
   try {
     const section = await Section.findById(req.params.id);
     if (!section) {
-      res.status(404).send({ error: `Found no section!` });
+      return res.status(404).send({ error: `Found no section!` });
     }
 
     const course = await Course.findById(section.courseId);
     if (!course || course.tutor !== req.user._id.toString()) {
-      res.status(404).send({ error: `Found no course!` });
+      return res.status(404).send({ error: `Found no course!` });
     }
 
     course.sections = course.sections.filter(st => st.section !== section._id.toString());
@@ -97,12 +97,12 @@ sectionRoute.patch('/sections/:id', authentication, rolesValidation(['Teacher', 
   try {
     const section = await Section.findById(req.params.id);
     if (!section) {
-      res.status(404).send({ error: `Found no section!` });
+      return res.status(404).send({ error: `Found no section!` });
     }
 
     const course = await Course.findById(section.courseId);
     if (!course || course.tutor !== req.user._id.toString()) {
-      res.status(404).send({ error: `Found no course!` });
+      return res.status(404).send({ error: `Found no course!` });
     }
 
     let hasChanged = false;
