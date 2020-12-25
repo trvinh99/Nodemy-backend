@@ -209,12 +209,30 @@ lectureRoute.get('/lectures/:id/video', authentication, async (req, res) => {
     if (hasBought !== -1 || lecture.canPreview) {
       const stat = fs.statSync(lecture.video);
       const fileSize = stat.size;
-      const head = {
-        'Content-Length': fileSize,
-        'Content-Type': 'video/mp4',
-      };
-      res.writeHead(200, head);
-      fs.createReadStream(lecture.video).pipe(res);
+    
+      if (req.headers.range) {
+        const parts = req.headers.range.replace(/bytes=/, "").split("-")
+        const start = parseInt(parts[0], 10)
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize-1;
+        const chunksize = (end - start) + 1
+        const file = fs.createReadStream(lecture.video, {start, end})
+        const head = {
+          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': 'video/mp4',
+        }
+        res.writeHead(206, head);
+        file.pipe(res);
+      }
+      else {
+        const head = {
+          'Content-Length': fileSize,
+          'Content-Type': 'video/mp4',
+        };
+        res.writeHead(200, head);
+        fs.createReadStream(lecture.video).pipe(res);
+      }
     }
     else {
       return res.status(400).send({
@@ -229,12 +247,37 @@ lectureRoute.get('/lectures/:id/video', authentication, async (req, res) => {
   }
 });
 
-lectureRoute.patch('/lectures/:id/process', authentication, async (req, res) => {
-
-});
-
 lectureRoute.delete('/lectures/:id', authentication, rolesValidation(['Admin', 'Teacher']), async (req, res) => {
+  try {
+    const lecture = await CourseLecture.findById(req.params.id);
+    if (!lecture) {
+      return res.status(404).send({
+        error: 'Found no lecture!',
+      });
+    }
 
+    const course = await Course.findById(lecture.courseId);
+    if (course.tutor !== req.user._id.toString()) {
+      return res.status(404).send({
+        error: 'Found no lecture!',
+      });
+    }
+
+    const section = await CourseSection.findById(lecture.sectionId);
+    section.lectures = section.lectures.filter((subLecture) => subLecture.lecture !== lecture._id.toString());
+
+    await lecture.delete();
+    await section.save();
+    
+    res.send({
+      lecture,
+    });
+  }
+  catch {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
 });
 
 module.exports = lectureRoute;
