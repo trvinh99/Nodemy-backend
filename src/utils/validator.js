@@ -7,6 +7,8 @@ const isObjectId = (id = '', name = '', customMessage = '') => {
   const error = customMessage || `Format of ${name}'s is invalid!`;
 
   try {
+    checkType(id, 'string', name, error);
+
     if (id.length !== 24) {
       throw new NodemyResponseError(400, error);
     }

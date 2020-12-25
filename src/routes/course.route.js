@@ -13,7 +13,7 @@ const createCourseRequest = require('../requests/course/createCourse.request');
 const updateCourseRequest = require('../requests/course/updateCourse.request');
 const getCourseRequest = require('../requests/course/getCourse.request');
 const deleteCourseRequest = require('../requests/course/deleteCourse.request');
-const getListCoursesRequest = require('../requests/category/getListCourses.request');
+const getListCoursesRequest = require('../requests/course/getListCourses.request');
 const getCourseCoverImageRequest = require('../requests/course/getCourseCoverImage.request');
 
 const downloader = require('../utils/downloader');
