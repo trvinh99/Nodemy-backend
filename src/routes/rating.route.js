@@ -43,16 +43,9 @@ ratingRoute.get('/ratings/:courseId', async (req, res) => {
             return res.status(404).send({ error: `Found no course!` });
         }
         
-        const ratings = await Rating.find({ courseId: req.params.courseId });
+        const ratings = await Rating.getListRatings(req.query.page, req.params.courseId);
 
-        for (let i = 0; i < ratings.length; ++i) {
-            ratings[i] = {
-                ...ratings[i]._doc,
-                userFullname: (await User.findById(ratings[i].userId)).fullname
-            }
-        }
-
-        res.send({ ratings });
+        res.send(ratings);
     }
     catch (error) {
         console.log(error.message)
