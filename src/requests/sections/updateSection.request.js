@@ -1,26 +1,14 @@
 const NodemyResponseError = require("../../utils/NodemyResponseError");
+const { objectConstraints, isObjectId, stringConstraints } = require("../../utils/validator");
 
-const updateSectionRequest = ({ body }) => {
-    if (typeof body !== "object") {
-        throw new NodemyResponseError(400, "Type of update section's body must be object!");
-    }
-    const {
-        sectionName,
-        ...rest
-    } = body;
+const updateSectionRequest = ({ params, body }) => {
+  const { id } = objectConstraints(params, "Update section's params", ['id']);
+  isObjectId(id, "section's id");
 
-    if (Object.keys(rest).length !== 0) {
-        throw new NodemyResponseError(400, "Update section's body has redundant field(s)!");
-    }
-    if (sectionName !== undefined) {
-        if (typeof sectionName !== "string") {
-            throw new NodemyResponseError(400, "Type of section's name must be string!");
-        }
-
-        if (sectionName.length > 200) {
-            throw new NodemyResponseError(400, "Section's name must not contain more than 200 characters!");
-        }
-    }
+  const { sectionName } = objectConstraints(body, "Update section's body", ['sectionName']);
+  if (typeof sectionName !== 'undefined') {
+    stringConstraints(sectionName, "Section's name", { minLength: 1, maxLength: 200, isRequired: true });
+  }
 };
 
 module.exports = updateSectionRequest;

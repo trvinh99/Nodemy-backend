@@ -1,34 +1,10 @@
-const NodemyResponseError = require("../../utils/NodemyResponseError");
+const { objectConstraints, isObjectId, stringConstraints } = require("../../utils/validator");
 
 const createSectionRequest = ({ body }) => {
-  if (typeof body !== "object") {
-    throw new NodemyResponseError(400, "Type of create section's body must be object!");
-  }
-  const {
-    courseId,
-    sectionName,
-    ...rest
-  } = body;
+  const { courseId, sectionName } = objectConstraints(body, "Create section's body", ['courseId', 'sectionName']);
 
-  if (Object.keys(rest).length !== 0) {
-    throw new NodemyResponseError(400, "Create section's body has redundant field(s)!");
-  }
-
-  if (typeof sectionName !== "string") {
-    throw new NodemyResponseError(400,"Type of section's name must be string!");
-  }
-
-  if (sectionName.length > 200) {
-      throw new NodemyResponseError(400,"Section's name must not contain more than 200 characters!");
-  }
-
-  if (typeof courseId !== "string") {
-    throw new NodemyResponseError(400,"Type of section's course id must be string!");
-  }
-    
-  if (courseId.length !== 24) {
-      throw new NodemyResponseError(400, "Course id must contain 24 characters!");
-    }
+  isObjectId(courseId, "course's id");
+  stringConstraints(sectionName, "Section's name", { minLength: 1, maxLength: 200, isRequired: true });
 };
 
 module.exports = createSectionRequest;

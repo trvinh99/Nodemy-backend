@@ -8,11 +8,15 @@ const courseSectionSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
+    minlength: 24,
+    maxlength: 24,
   },
   sectionName: {
     type: String,
     required: true,
     trim: true,
+    minlength: 1,
+    maxlength: 200,
   },
   lectures: [{
     lecture: {
