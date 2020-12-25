@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const Course = require('./course.model');
+const Log = require('./log.model');
 
 const courseSectionSchema = new mongoose.Schema({
   courseId: {
@@ -36,9 +37,18 @@ courseSectionSchema.methods.toJSON = function () {
 
 courseSectionSchema.post('save', async function (section) {
   const { updatedAt, courseId } = section;
-  const course = await Course.findById(courseId);
-  course.updatedAt = updatedAt;
-  await course.save();
+  try {
+    const course = await Course.findById(courseId);
+    course.updatedAt = updatedAt;
+    await course.save();
+  }
+  catch (error) {
+    const log = new Log({
+      location: 'courseSection.model.js',
+      message: error.message,
+    });
+    await log.save();
+  }
 });
 
 const CourseSection = mongoose.model('CourseSection', courseSectionSchema);

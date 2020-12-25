@@ -6,21 +6,29 @@ const categorySchema = new mongoose.Schema({
     required: true,
     trim: true,
     unique: true,
+    minlength: 1,
+    maxlength: 50,
   },
   description: {
     type: String,
     default: "",
     trim: true,
+    minlength: 1,
+    maxlength: 1000,
   },
   parentCategory: {
     type: String,
     trim: true,
+    minlength: 24,
+    maxlength: 24,
   },
   subCategories: [{
     category: {
       type: String,
       default: "",
       trim: true,
+      minlength: 24,
+      maxlength: 24,
     },
   }],
   totalCourses: {
@@ -32,6 +40,8 @@ const categorySchema = new mongoose.Schema({
 }, {
   timestamps: true,
 });
+
+categorySchema.index({ name: 'text' });
 
 categorySchema.methods.toJSON = function () {
   const category = this;

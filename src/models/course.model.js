@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const Category = require('./category.model');
+const Log = require('./log.model');
 
 const courseSchema = new mongoose.Schema({
   title: {
@@ -28,6 +29,8 @@ const courseSchema = new mongoose.Schema({
     type: String,
     require: true,
     trim: true,
+    minlength: 24,
+    maxlength: 24,
   },
   coverImage: {
     type: Buffer,
@@ -47,6 +50,8 @@ const courseSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
+    minlength: 24,
+    maxlength: 24,
   },
   isFinish: {
     type: Boolean,
@@ -62,12 +67,16 @@ const courseSchema = new mongoose.Schema({
     section: {
       type: String,
       require: true,
+      minlength: 24,
+      maxlength: 24,
     },
   }],
   ratings: [{
     rating: {
       type: String,
       require: true,
+      minlength: 24,
+      maxlength: 24,
     },
   }],
   totalRegistered: {
@@ -93,7 +102,7 @@ courseSchema.methods.toJSON = function () {
   return courseObj;
 };
 
-courseSchema.statics.getListCourses = async (isPublic = true, page = 1, title, categoryName) => {
+courseSchema.statics.getListCourses = async (isPublic = true, page = 1, title = '', categoryName = '') => {
   const coursesPerPage = 12;
   const skip = coursesPerPage * (page - 1);
 
@@ -103,21 +112,30 @@ courseSchema.statics.getListCourses = async (isPublic = true, page = 1, title, c
     isPublic,
   };
 
-  if (title) {
+  if (typeof title === 'string' && title.trim().length > 0) {
     query.title = {
       $regex: new RegExp(`${title}`, 'i'),
     };
   }
 
-  if (categoryName) {
-    const categories = await Category.find({ name: { $regex: new RegExp(`${categoryName}`, 'i') } });
-    const rawNames = []
-    categories.forEach((category) => {
-      rawNames.push(`(${category._id.toString()})`);
-    });
-    query.category = {
-      $regex: new RegExp(`${rawNames.join('|')}`, 'i'),
-    };
+  if (typeof categoryName === 'string' && categoryName.trim().length > 0) {
+    try {
+      const categories = await Category.find({ name: { $regex: new RegExp(`${categoryName}`, 'i') } });
+      const ids = [];
+      categories.forEach((category) => {
+        ids.push(`(${category._id.toString()})`);
+      });
+      query.category = {
+        $regex: new RegExp(`${ids.join('|')}`, 'i'),
+      };
+    }
+    catch (error) {
+      const log = new Log({
+        location: 'course.model.js - line 134',
+        message: error.message,
+      });
+      await log.save();
+    }
   }
 
   const totalCourses = await Course.find(query).countDocuments();
@@ -127,12 +145,27 @@ courseSchema.statics.getListCourses = async (isPublic = true, page = 1, title, c
   .limit(coursesPerPage);
 
   for (let i = 0; i < courses.length; ++i) {
-    const foundCategoryName = (await Category.findById(courses[i].category)).name;
-    courses[i] = {
-      ...courses[i]._doc,
-      coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
-      categoryName: foundCategoryName,
-    };
+    try {
+      const foundCategoryName = (await Category.findById(courses[i].category)).name;
+      courses[i] = {
+        ...courses[i]._doc,
+        coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
+        categoryName: foundCategoryName,
+      };
+    }
+    catch (error) {
+      courses[i] = {
+        ...courses[i]._doc,
+        coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
+        categoryName: ''
+      };
+
+      const log = new Log({
+        location: 'course.model.js - line 164',
+        message: error.message,
+      });
+      await log.save();
+    }
   }
 
   return {

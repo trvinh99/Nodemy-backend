@@ -1,11 +1,14 @@
 const mongoose = require('mongoose');
 const randToken = require('rand-token');
+const NodemyResponseError = require('../utils/NodemyResponseError');
 
 const refreshTokenSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
     trim: true,
+    minlength: 24,
+    maxlength: 24,
   },
   token: {
     type: String,
@@ -68,7 +71,7 @@ refreshTokenSchema.statics.validateRefreshToken = async (token = '') => {
     return refreshToken.userId;
   }
   catch {
-    throw new Error('Refresh token is invalid!');
+    throw new NodemyResponseError(400, 'Refresh token is invalid!');
   }
 };
 

@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
         throw new Error('Email is invalid!');
       }
     },
+    maxlength: 100,
   },
   fullname: {
     type: String,
@@ -64,10 +65,14 @@ const userSchema = new mongoose.Schema({
     courseId: {
       type: String,
       trim: true,
+      minlength: 24,
+      maxlength: 24
     },
     currentWatchingLecture: {
       type: String,
       trim: true,
+      minlength: 24,
+      maxlength: 24,
     },
     currentWatchingTimepoint: {
       type: Number,
