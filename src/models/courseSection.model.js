@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const Course = require('./category.model');
+const Course = require('./course.model');
 
 const courseSectionSchema = new mongoose.Schema({
   courseId: {

@@ -17,10 +17,12 @@ app.get("/", (_, res) => {
 const userRoute = require("./routes/user.route");
 const categoryRoute = require("./routes/category.route");
 const courseRoute = require('./routes/course.route');
+const sectionRoute = require('./routes/section.route');
 
 app.use(userRoute);
 app.use(categoryRoute);
 app.use(courseRoute);
+app.use(sectionRoute);
 
 app.get('*', (_, res) => {
   res.status(404).send();
