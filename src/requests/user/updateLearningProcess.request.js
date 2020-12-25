@@ -1,11 +1,12 @@
-const NodemyResponseError = require("../../utils/NodemyResponseError");
+const { objectConstraints, isObjectId, numberConstraints } = require("../../utils/validator");
 
 const updateLearningProcessRequest = ({ body }) => {
-  if (typeof body !== 'object') {
-    throw new NodemyResponseError(400, 'Type of body must be object!');
-  }
+  const { courseId, currentWatchingLecture, currentWatchingTimepoint } =
+    objectConstraints(body, 'Update learning process\'s body', ['courseId', 'currentWatchingLecture', 'currentWatchingTimepoint']);
 
-  const { courseId, currentWatchingLecture, currentWatchingTimepoint } = body;
+  isObjectId(courseId, "course's id");
+  isObjectId(currentWatchingLecture, "current watching lecture's id");
+  numberConstraints(currentWatchingTimepoint, 'Current watching timepoint', { min: 0 });
 };
 
 module.exports = updateLearningProcessRequest;

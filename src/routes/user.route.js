@@ -4,9 +4,11 @@ const sharp = require('sharp');
 const multer = require('multer');
 const randToken = require('rand-token');
 
+const Log = require('../models/log.model');
 const TempUser = require('../models/tempUser.model');
 const User = require('../models/user.model');
 const RefreshToken = require('../models/refreshToken.model');
+const CourseLecture = require('../models/courseLecture.model');
 
 const requestValidation = require('../middlewares/requestValidation.middleware');
 const authorization = require('../middlewares/authorization.middleware');
@@ -23,11 +25,10 @@ const updateGoogleRequest = require('../requests/user/updateGoogle.request');
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
 
-const registerError = require('../responses/user/register.response');
 const updateError = require('../responses/user/update.response');
 
 const downloader = require('../utils/downloader');
-const NodemyResponseError = require('../utils/NodemyResponseError');
+const updateLearningProcessRequest = require('../requests/user/updateLearningProcess.request');
 
 const userRoute = express.Router();
 
@@ -36,7 +37,9 @@ userRoute.post('/users', requestValidation(registerRequest), async (req, res) =>
   try {
     const user = await User.findOne({ email: req.body.email });
     if (user) {
-      throw new NodemyResponseError(400, 'Email is already exists!');
+      return res.status(400).send({
+        error: 'Email is already exists!',
+      });
     }
 
     const info = {
@@ -60,7 +63,15 @@ userRoute.post('/users', requestValidation(registerRequest), async (req, res) =>
     });
   }
   catch (error) {
-    registerError(res, error);
+    const log = new Log({
+      location: 'register user.route.js',
+      message: error.message,
+    });
+    await log.save();
+
+    res.status(500).send({
+      error: 'Internal Server Error!',
+    });
   }
 });
 
@@ -288,12 +299,49 @@ userRoute.patch('/users/update-with-google', authentication, requestValidation(u
   }
 });
 
-userRoute.patch('/users/learning-process', authentication, async (req, res) => {
+userRoute.patch('/users/learning-process', authentication, requestValidation(updateLearningProcessRequest), async (req, res) => {
   try {
-    
+    let courseId = '';
+    let foundIndex = -1;
+    for (let i = 0; i < req.user.boughtCourses.length; ++i) {
+      if (req.user.boughtCourses[i].courseId === req.body.courseId) {
+        courseId = req.body.courseId;
+        foundIndex = i;
+        break;
+      }
+    }
+
+    if (!courseId) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    const lecture = await CourseLecture.findById(req.body.currentWatchingLecture);
+    if (!lecture || lecture.courseId !== courseId) {
+      return res.status(404).send({
+        error: 'Found no lecture!',
+      });
+    }
+
+    req.user.boughtCourses[foundIndex].currentWatchingLecture = req.body.currentWatchingLecture;
+    req.user.boughtCourses[foundIndex].currentWatchingTimepoint = req.body.currentWatchingTimepoint;
+    await req.user.save();
+
+    res.send({
+      user: req.user,
+    });
   }
   catch (error) {
+    const log = new Log({
+      location: 'Update learning process user.model.js',
+      message: error.message,
+    });
+    await log.save();
 
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
   }
 });
 
