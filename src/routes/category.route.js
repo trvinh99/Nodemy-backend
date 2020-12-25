@@ -29,7 +29,7 @@ categoryRoute.get("/categories/:id", async (req, res) => {
 
     const category = await Category.findById(req.params.id);
     if (!category) {
-      res.status(404).send({ error: "Found no category!" });
+      return res.status(404).send({ error: "Found no category!" });
     }
 
     res.send({ category });
@@ -46,7 +46,7 @@ categoryRoute.post("/categories", authentication, requestValidation(createCatego
     if (req.body.parentCategory) {
       const parentCategory = await Category.findById(category.parentCategory);
       if (!parentCategory) {
-        res.status(404).send({ error: "Found no parent category!" });
+        return res.status(404).send({ error: "Found no parent category!" });
       }
       parentCategory.subCategories.push({ category: category._id.toString() });
       await parentCategory.save();
@@ -72,7 +72,7 @@ categoryRoute.delete("/categories/:id", authentication, async (req, res) => {
 
     const category = await Category.findById(categoryId);
     if (!category) {
-      res.status(404).send({ error: "Found no category" });
+      return res.status(404).send({ error: "Found no category" });
     }
 
     if (category.subCategories.length !== 0) {
@@ -112,7 +112,7 @@ categoryRoute.patch("/categories/:id", authentication, requestValidation(updateC
   try {
     const category = await Category.findById(req.params.id);
     if (!category) {
-      res.status(404).send({ error: "Found no category" });
+      return res.status(404).send({ error: "Found no category" });
     }
 
     let hasChanged = false;
@@ -130,7 +130,7 @@ categoryRoute.patch("/categories/:id", authentication, requestValidation(updateC
     if (typeof req.body.parentCategory !== 'undefined' && category.parentCategory !== req.body.parentCategory) {
       const parentCategory = await Category.findById(req.body.parentCategory);
       if (!parentCategory) {
-        res.status(404).send({ error: "Found no parent category" });
+        return res.status(404).send({ error: "Found no parent category" });
       }
 
       const oldParentCategory = await Category.findById(category.parentCategory);
