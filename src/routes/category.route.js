@@ -3,15 +3,17 @@ const express = require("express");
 const authentication = require("../middlewares/authentication.middleware");
 const Category = require("../models/category.model");
 const requestValidation = require("../middlewares/requestValidation.middleware");
+const Log = require('../models/log.model');
 
 const createCategoryRequest = require("../requests/category/createCategory.request");
 const updateCategoryRequest = require("../requests/category/updateCategory.request");
 
-const categoryError = require("../responses/category/category.response");
 const getListCategoriesRequest = require("../requests/category/getListCategories.request");
 const getCategoryRequest = require("../requests/category/getCategory.request");
 const rolesValidation = require("../middlewares/rolesValidation.middleware");
 const deleteCategoryRequest = require("../requests/category/deleteCategory.request");
+const updateCategoryError = require("../responses/category/updateCategory.response");
+const createCategoryError = require("../responses/category/createCategory.response");
 
 const categoryRoute = express.Router();
 
@@ -28,6 +30,12 @@ categoryRoute.get("/categories", requestValidation(getListCategoriesRequest), as
     res.send({ categories });
   }
   catch (error) {
+    const log = new Log({
+      location: 'Get list category category.route.js',
+      message: error.message,
+    });
+    await log.save();
+
     res.status(500).send({ error: "Internal Server Error" });
   }
 });
@@ -42,7 +50,15 @@ categoryRoute.get("/categories/:id", requestValidation(getCategoryRequest), asyn
     res.send({ category });
   }
   catch (error) {
-    res.status(404).send({ error: "Found no category!" });
+    const log = new Log({
+      location: 'Get category category.route.js',
+      message: error.message,
+    });
+    await log.save();
+
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
   }
 });
 
@@ -64,9 +80,7 @@ categoryRoute.post("/categories", authentication, rolesValidation(['Admin']), re
     res.status(201).send({ category });
   }
   catch (error) {
-    res.status(400).send({
-      error: categoryError.createCategoryError(error),
-    });
+    createCategoryError(res, error);
   }
 });
 
@@ -149,9 +163,7 @@ categoryRoute.patch("/categories/:id", authentication, requestValidation(updateC
     res.send({ category });
   }
   catch (error) {
-    res.status(400).send({
-      error: categoryError.updateCategoryError(error),
-    });
+    updateCategoryError(res, error);
   }
 });
 

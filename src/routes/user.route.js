@@ -29,19 +29,13 @@ const updateError = require('../responses/user/update.response');
 
 const downloader = require('../utils/downloader');
 const updateLearningProcessRequest = require('../requests/user/updateLearningProcess.request');
+const registerError = require('../responses/user/register.response');
 
 const userRoute = express.Router();
 
 // Create new account
 userRoute.post('/users', requestValidation(registerRequest), async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
-    if (user) {
-      return res.status(400).send({
-        error: 'Email is already exists!',
-      });
-    }
-
     const info = {
       email: req.body.email,
       fullname: req.body.fullname,
@@ -63,15 +57,7 @@ userRoute.post('/users', requestValidation(registerRequest), async (req, res) =>
     });
   }
   catch (error) {
-    const log = new Log({
-      location: 'register user.route.js',
-      message: error.message,
-    });
-    await log.save();
-
-    res.status(500).send({
-      error: 'Internal Server Error!',
-    });
+    registerError(res, error);
   }
 });
 
