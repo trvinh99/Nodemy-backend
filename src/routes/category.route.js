@@ -88,7 +88,7 @@ categoryRoute.delete("/categories/:id", authentication, rolesValidation(['Admin'
   try {
     const category = await Category.findById(req.params.id);
     if (!category) {
-      res.status(404).send({ error: "Found no category" });
+      return res.status(404).send({ error: "Found no category" });
     }
 
     if (category.subCategories.length !== 0) {
@@ -125,7 +125,7 @@ categoryRoute.patch("/categories/:id", authentication, requestValidation(updateC
   try {
     const category = await Category.findById(req.params.id);
     if (!category) {
-      res.status(404).send({ error: "Found no category" });
+      return res.status(404).send({ error: "Found no category" });
     }
 
     let hasChanged = false;
