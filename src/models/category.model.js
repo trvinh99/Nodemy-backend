@@ -37,6 +37,12 @@ const categorySchema = new mongoose.Schema({
     min: 0,
     default: 0,
   },
+  totalRegisteredLastWeek: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0,
+  },
 }, {
   timestamps: true,
 });
@@ -52,6 +58,21 @@ categorySchema.methods.toJSON = function () {
   delete categoryObject.updatedAt;
 
   return categoryObject;
+};
+
+categorySchema.statics.updateTotalRegisteredLastWeek = async (categoryId) => {
+  try {
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return false;
+    }
+
+    ++category.totalRegisteredLastWeek;
+    await category.save();
+
+    await Category.updateTotalRegisteredLastWeek(category.parentCategory);
+  }
+  catch { /** ignored */ }
 };
 
 categorySchema.index({ name: "text" });

@@ -167,4 +167,18 @@ categoryRoute.patch("/categories/:id", authentication, requestValidation(updateC
   }
 });
 
+categoryRoute.get('/categories/most-registered', async (_, res) => {
+  try {
+    const categories = await Category.find().sort({ totalRegisteredLastWeek: 'desc' }).limit(6);
+    res.send({
+      categories,
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
 module.exports = categoryRoute;

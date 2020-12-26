@@ -85,6 +85,12 @@ const courseSchema = new mongoose.Schema({
     default: 0,
     required: true,
   },
+  totalRegisteredLastWeek: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0,
+  },
   totalViewed: {
     type: Number,
     min: 0,

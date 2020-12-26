@@ -6,6 +6,7 @@ const Category = require('../models/category.model');
 const CourseSection = require('../models/courseSection.model');
 const CourseLecture = require('../models/courseLecture.model');
 const Rating = require('../models/rating.model');
+const HotCourse = require('../models/hotCourse.model');
 
 const authentication = require('../middlewares/authentication.middleware');
 const requestValidation = require('../middlewares/requestValidation.middleware');
@@ -197,6 +198,24 @@ courseRoute.get('/courses/new', async (_, res) => {
   }
 });
 
+courseRoute.get('/courses/hot', async (_, res) => {
+  try {
+    const courses = await HotCourse.find().sort({ totalRegisteredLastWeek: 'desc' }).limit(5);
+    for (let i = 0; i < courses.length; ++i) {
+      courses[i] = await Course.findById(courses[i].courseId);
+    }
+
+    res.send({
+      courses,
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
 courseRoute.get('/courses/:id', requestValidation(getCourseRequest), async (req, res) => {
   try {
     const selectedFields = '_id title summary description tutor coverImage price sale category isPublic isFinish sections ratings totalRegistered';
@@ -370,12 +389,25 @@ courseRoute.patch('/courses/:id/buy', authentication, requestValidation(buyCours
     }
 
     ++course.totalRegistered;
+    ++course.totalRegisteredLastWeek;
+
     req.user.boughtCourses.push({
       courseId: course._id.toString(),
     });
 
     await course.save();
     await req.user.save();
+
+    await Category.updateTotalRegisteredLastWeek(course.category);
+    const foundInHotCourse = await HotCourse.find({ courseId: course._id.toString() });
+    if (!foundInHotCourse) {
+      const hotCourse = new HotCourse({ courseId: course._id.toString(), totalRegisteredLastWeek: course.totalRegisteredLastWeek });
+      await hotCourse.save();
+    }
+    else {
+      foundInHotCourse.totalRegisteredLastWeek = course.totalRegisteredLastWeek;
+      await foundInHotCourse.save();
+    }
 
     sendPurchasedNotification(req.user.email, req.user.fullname, course.title);
 

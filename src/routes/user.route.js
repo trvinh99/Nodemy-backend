@@ -331,4 +331,16 @@ userRoute.patch('/users/learning-process', authentication, requestValidation(upd
   }
 });
 
+userRoute.patch('/users/add-course-to-wishlist', authentication, async (req, res) => {
+
+});
+
+userRoute.patch('/users/remove-course-from-wishlist', authentication, async (req, res) => {
+
+});
+
+userRoute.get('/users/courses', authentication, async (req, res) => {
+
+});
+
 module.exports = userRoute;
