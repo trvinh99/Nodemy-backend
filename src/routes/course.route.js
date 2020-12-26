@@ -157,6 +157,46 @@ courseRoute.get('/courses/admin/:id', authentication, rolesValidation(['Admin'])
   }
 });
 
+courseRoute.get('/courses/top-viewed', async (_, res) => {
+  try {
+    const courses = await Course
+    .find()
+    .select('_id title summary tutor price sale category isFinish totalRegistered')
+    .sort({ totalViewed: 'desc' })
+    .limit(10);
+    await Course.formatListCoursesWhenSelect(courses);
+
+    res.send({
+      courses
+    });
+  }
+  catch {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+courseRoute.get('/courses/new', async (_, res) => {
+  try {
+    const courses = await Course
+    .find()
+    .select('_id title summary tutor price sale category isFinish totalRegistered')
+    .sort({ updatedAt: 'desc' })
+    .limit(10);
+    await Course.formatListCoursesWhenSelect(courses);
+
+    res.send({
+      courses
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
 courseRoute.get('/courses/:id', requestValidation(getCourseRequest), async (req, res) => {
   try {
     const selectedFields = '_id title summary description tutor coverImage price sale category isPublic isFinish sections ratings totalRegistered';
@@ -169,6 +209,8 @@ courseRoute.get('/courses/:id', requestValidation(getCourseRequest), async (req,
 
     const category = (await Category.findById(course.category)).name;
     delete course.isPublic;
+
+    await Course.increaseTotalViewed(course._id.toString());
 
     res.send({
       course: {

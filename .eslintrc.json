@@ -26,6 +26,7 @@
     "no-plusplus": "off",
     "radix": "off",
     "no-prototype-builtins": "off",
-    "valid-typeof": "off"
+    "valid-typeof": "off",
+    "no-param-reassign": "off"
   }
 }

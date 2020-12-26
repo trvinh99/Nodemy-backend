@@ -85,6 +85,12 @@ const courseSchema = new mongoose.Schema({
     default: 0,
     required: true,
   },
+  totalViewed: {
+    type: Number,
+    min: 0,
+    default: 0,
+    required: true,
+  },
 });
 
 courseSchema.index({ title: 'text' });
@@ -100,6 +106,26 @@ courseSchema.methods.toJSON = function () {
   courseObj.coverImage = `${process.env.HOST}/courses/${course._id.toString()}/cover-image`;
 
   return courseObj;
+};
+
+courseSchema.statics.formatListCoursesWhenSelect = async (courses = []) => {
+  for (let i = 0; i < courses.length; ++i) {
+    try {
+      const foundCategoryName = (await Category.findById(courses[i].category)).name;
+      courses[i] = {
+        ...courses[i]._doc,
+        coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
+        categoryName: foundCategoryName,
+      };
+    }
+    catch (error) {
+      courses[i] = {
+        ...courses[i]._doc,
+        coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
+        categoryName: ''
+      };
+    }
+  }
 };
 
 courseSchema.statics.getListCourses = async (isPublic = true, page = 1, title = '', categoryName = '') => {
@@ -145,35 +171,26 @@ courseSchema.statics.getListCourses = async (isPublic = true, page = 1, title = 
   .skip(skip)
   .limit(coursesPerPage);
 
-  for (let i = 0; i < courses.length; ++i) {
-    try {
-      const foundCategoryName = (await Category.findById(courses[i].category)).name;
-      courses[i] = {
-        ...courses[i]._doc,
-        coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
-        categoryName: foundCategoryName,
-      };
-    }
-    catch (error) {
-      courses[i] = {
-        ...courses[i]._doc,
-        coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
-        categoryName: ''
-      };
-
-      const log = new Log({
-        location: 'course.model.js - line 164',
-        message: error.message,
-      });
-      await log.save();
-    }
-  }
+  await Course.formatListCoursesWhenSelect(courses);
 
   return {
     courses,
     totalCourses,
     totalPages: Math.ceil(totalCourses / coursesPerPage),
   };
+};
+
+courseSchema.statics.increaseTotalViewed = async (courseId = '') => {
+  try {
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return false;
+    }
+
+    ++course.totalViewed;
+    await course.save();
+  }
+  catch { /** ignored */ }
 };
 
 const Course = mongoose.model("Course", courseSchema);
