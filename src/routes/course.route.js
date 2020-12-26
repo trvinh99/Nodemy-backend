@@ -57,7 +57,7 @@ courseRoute.post('/courses', authentication, rolesValidation(['Teacher', 'Admin'
 
 courseRoute.get('/courses', requestValidation(getListCoursesRequest), async (req, res) => {
   try {
-    const listCourses = await Course.getListCourses(true, req.query.page, req.query.title, req.query.category);
+    const listCourses = await Course.getListCourses(true, req.query.page || 1, req.query.title, req.query.category);
     res.send(listCourses);
   }
   catch (error) {
@@ -85,7 +85,7 @@ courseRoute.get('/courses/me', authentication, rolesValidation(['Teacher', 'Admi
 
 courseRoute.get('/courses/admin', authentication, rolesValidation(['Admin']), requestValidation(getListCoursesRequest), async (req, res) => {
   try {
-    const listCourses = await Course.getListCourses(false, req.query.page, req.query.title, req.query.category);
+    const listCourses = await Course.getListCourses(false, req.query.page || 1, req.query.title, req.query.category);
     res.send(listCourses);
   }
   catch (error) {

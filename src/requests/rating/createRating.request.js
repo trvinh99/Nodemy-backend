@@ -1,40 +1,20 @@
 const NodemyResponseError = require("../../utils/NodemyResponseError");
+const { objectConstraints, isObjectId, stringConstraints, numberConstraints } = require("../../utils/validator");
 
-const updateRatingRequest = ({ body }) => {
-    if (typeof body !== "object") {
-        throw new NodemyResponseError(400, "Type of create rating's body must be object!");
-    }
-    const {
-        courseId,
-        title,
-        description,
-        rating,
-        ...rest
-    } = body;
+const createRatingRequest = ({ body }) => {
+  const { courseId, title, description, rating } = objectConstraints(body, "Create rating's body", ['courseId', 'title', 'description', 'rating']);
+  
+  isObjectId(courseId, "course's id");
 
-    if (Object.keys(rest).length !== 0) {
-        throw new NodemyResponseError(400, "Update rating's body has redundant field(s)!");
-    }
+  stringConstraints(title, "Rating's title", { minLength: 1, maxLength: 100, isRequired: true });
 
-    if (typeof courseId !== "string") {
-        throw new NodemyResponseError(400,"Type of rating's course id must be string!");
-    }
-    
-    if (courseId.length !== 24) {
-      throw new NodemyResponseError(400, "Course id must contain 24 characters!");
-    }
+  stringConstraints(description, "Rating's description", { minLength: 1, maxLength: 500, isRequired: true });
 
-    if (typeof title !== "string") {
-        throw new NodemyResponseError(400, "Type of rating's title must be string!");
-    }
+  numberConstraints(rating, "Rating's value", { min: 1, max: 5 });
 
-    if (typeof description !== "string") {
-        throw new NodemyResponseError(400, "Type of rating's description must be string!");
-    }
-
-    if (typeof rating !== "number") {
-        throw new NodemyResponseError(400, "Type of rating's rating must be number!");
-    }
+  if (rating !== 1 && rating !== 2 && rating !== 3 && rating !== 4 && rating !== 5) {
+    throw new NodemyResponseError(400, "Rating's value must be 1, 2, 3, 4 or 5");
+  }
 };
 
-module.exports = updateRatingRequest;
+module.exports = createRatingRequest;
