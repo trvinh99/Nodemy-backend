@@ -5,6 +5,7 @@ const Course = require('../models/course.model');
 const Category = require('../models/category.model');
 const CourseSection = require('../models/courseSection.model');
 const CourseLecture = require('../models/courseLecture.model');
+const Rating = require('../models/rating.model');
 
 const authentication = require('../middlewares/authentication.middleware');
 const requestValidation = require('../middlewares/requestValidation.middleware');
@@ -13,9 +14,10 @@ const createCourseRequest = require('../requests/course/createCourse.request');
 const updateCourseRequest = require('../requests/course/updateCourse.request');
 const getCourseRequest = require('../requests/course/getCourse.request');
 const getListCoursesRequest = require('../requests/course/getListCourses.request');
+const buyCourseRequest = require('../requests/course/buyCourse.request');
 
 const downloader = require('../utils/downloader');
-const buyCourseRequest = require('../requests/course/buyCourse.request');
+const sendPurchasedNotification = require('../emails/sendPurchasedNotification.email');
 
 const courseRoute = express.Router();
 
@@ -58,6 +60,9 @@ courseRoute.post('/courses', authentication, rolesValidation(['Teacher', 'Admin'
 courseRoute.get('/courses', requestValidation(getListCoursesRequest), async (req, res) => {
   try {
     const listCourses = await Course.getListCourses(true, req.query.page || 1, req.query.title, req.query.category);
+    for (let i = 0; i < listCourses.courses.length; ++i) {
+      listCourses.courses[i].ratings = await Rating.calculateCourseRating(listCourses.courses[i]._id.toString());
+    }
     res.send(listCourses);
   }
   catch (error) {
@@ -72,6 +77,9 @@ courseRoute.get('/courses/me', authentication, rolesValidation(['Teacher', 'Admi
   try {
     const selectedFields = '_id title summary tutor price sale category isFinish totalRegistered';
     const courses = await Course.find({ tutor: req.user._id.toString() }).select(selectedFields);
+    for (let i = 0; i < courses.length; ++i) {
+      courses[i].ratings = await Rating.calculateCourseRating(courses[i]._id.toString());
+    }
     res.send({
       courses,
     });
@@ -111,7 +119,8 @@ courseRoute.get('/courses/me/:id', authentication, rolesValidation(['Teacher', '
     res.send({
       course: {
         ...course,
-        categoryName: category
+        categoryName: category,
+        ratings: await Rating.calculateCourseRating(course._id.toString()),
       },
     });
   }
@@ -166,6 +175,7 @@ courseRoute.get('/courses/:id', requestValidation(getCourseRequest), async (req,
         ...course.toJSON(),
         coverImage: `${process.env.HOST}/courses/${course._id.toString()}/cover-image`,
         categoryName: category,
+        ratings: await Rating.calculateCourseRating(course._id.toString()),
       },
     });
   }
@@ -324,6 +334,8 @@ courseRoute.patch('/courses/:id/buy', authentication, requestValidation(buyCours
 
     await course.save();
     await req.user.save();
+
+    sendPurchasedNotification(req.user.email, req.user.fullname, course.title);
 
     res.send({
       message: 'You have purchased this course successfully!',

@@ -45,7 +45,7 @@ const ratingSchema = new mongoose.Schema({
   },
 });
 
-ratingSchema.statics.getListRatings = async (page = 1, courseId) => {
+ratingSchema.statics.getListRatings = async (page = 1, courseId = '') => {
   const ratingsPerPage = 10;
   const skip = ratingsPerPage * (page - 1);
   const query = {
@@ -69,7 +69,23 @@ ratingSchema.statics.getListRatings = async (page = 1, courseId) => {
     totalRatings,
     totalsPage: Math.ceil(totalRatings / ratingsPerPage),
   };
-}
+};
+
+ratingSchema.statics.calculateCourseRating = async (courseId = '') => {
+  const ratings = await Rating.find({ courseId });
+  let averageRating = 0;
+  ratings.forEach((rating) => {
+    averageRating += rating.rating;
+  });
+
+  averageRating /= ratings.length;
+  averageRating = averageRating.toFixed(1);
+
+  return {
+    averageRating,
+    totalRatings: ratings.length,
+  };
+};
 
 const Rating = mongoose.model("Rating", ratingSchema);
 module.exports = Rating;
