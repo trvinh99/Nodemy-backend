@@ -11,9 +11,14 @@ services:
     env_file: .env
     environment:
       - JWT_SECRET=$JWT_SECRET
-      - MONGODB_URL=$MONGODB_URL
       - SENDGRID_API_KEY=$SENDGRID_API_KEY
       - HOST=$HOST
+      - MONGO_USERNAME=$MONGO_USERNAME
+      - MONGO_PASSWORD=$MONGO_PASSWORD
+      - MONGO_HOSTNAME=db
+      - MONGO_PORT=$MONGO_PORT
+      - MONGO_DB=$MONGO_DB
+      - PHASE=$PHASE
     ports:
       - "80:8080"
     volumes:
