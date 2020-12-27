@@ -29,6 +29,8 @@ app.use(lectureRoute);
 app.use(sectionRoute);
 app.use(ratingRoute);
 
+app.use(express.static(`${__dirname}/views`));
+
 app.get('*', (_, res) => {
   res.status(404).send();
 });
