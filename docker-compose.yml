@@ -17,10 +17,6 @@ services:
       - SENDGRID_API_KEY=$SENDGRID_API_KEY
       - HOST=$HOST
       - PHASE=$PHASE
-    volumes:
-      - type: bind
-        source: /etc/letsencrypt/live/nodemy-apis.online
-        target: /home/nodemy-app/ssl
     ports:
       - "443:443"
     links:
