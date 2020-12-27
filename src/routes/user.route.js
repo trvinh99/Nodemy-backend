@@ -9,6 +9,7 @@ const TempUser = require('../models/tempUser.model');
 const User = require('../models/user.model');
 const RefreshToken = require('../models/refreshToken.model');
 const CourseLecture = require('../models/courseLecture.model');
+const Course = require('../models/course.model');
 
 const requestValidation = require('../middlewares/requestValidation.middleware');
 const authorization = require('../middlewares/authorization.middleware');
@@ -21,6 +22,8 @@ const loginGoogleRequest = require('../requests/user/loginGoogle.request');
 const getAvatarRequest = require('../requests/user/getAvatar.request');
 const updateNodemyRequest = require('../requests/user/updateNodemy.request');
 const updateGoogleRequest = require('../requests/user/updateGoogle.request');
+const wishlistRequest = require('../requests/user/wishlist.request');
+const updateLearningProcessRequest = require('../requests/user/updateLearningProcess.request');
 
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
@@ -28,7 +31,6 @@ const sendActivateToken = require('../emails/sendActivateToken.email');
 const updateError = require('../responses/user/update.response');
 
 const downloader = require('../utils/downloader');
-const updateLearningProcessRequest = require('../requests/user/updateLearningProcess.request');
 const registerError = require('../responses/user/register.response');
 
 const userRoute = express.Router();
@@ -331,16 +333,59 @@ userRoute.patch('/users/learning-process', authentication, requestValidation(upd
   }
 });
 
-userRoute.patch('/users/add-course-to-wishlist', authentication, async (req, res) => {
+userRoute.patch('/users/add-course-to-wishlist', authentication, requestValidation(wishlistRequest), async (req, res) => {
+  try {
+    for (let i = 0; i < req.user.boughtCourses.length; ++i) {
+      if (req.user.boughtCourses[i].courseId === req.body.courseId) {
+        return res.status(400).send({
+          error: 'You can not add an already purchased course to wishlist!',
+        });
+      }
+    }
 
+    for (let i = 0; i < req.user.wishlist.length; ++i) {
+      if (req.user.wishlist[i].courseId === req.body.courseId) {
+        return res.status(400).send({
+          error: 'You have already added this course to wishlist!',
+        });
+      }
+    }
+
+    const course = await Course.findById(req.body.courseId);
+    if (!course) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    req.user.wishlist = [...req.user.wishlist, { courseId: req.body.courseId }];
+    await req.user.save();
+
+    res.send({
+      user: req.user
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
 });
 
-userRoute.patch('/users/remove-course-from-wishlist', authentication, async (req, res) => {
+userRoute.patch('/users/remove-course-from-wishlist', authentication, requestValidation(wishlistRequest), async (req, res) => {
+  try {
+    req.user.wishlist = req.user.wishlist.filter((course) => course.courseId !== req.body.courseId);
+    await req.user.save();
 
-});
-
-userRoute.get('/users/courses', authentication, async (req, res) => {
-
+    res.send({
+      user: req.user,
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
 });
 
 module.exports = userRoute;

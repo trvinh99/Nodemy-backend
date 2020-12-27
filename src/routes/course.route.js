@@ -216,6 +216,27 @@ courseRoute.get('/courses/hot', async (_, res) => {
   }
 });
 
+courseRoute.get('/courses/single-basic-info/:id', requestValidation(getCourseRequest), async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id).select('_id title summary tutor price sale category isPublic isFinish totalRegistered');
+    if (!course || !course.isPublic) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    delete course.isPublic;
+    res.send({
+      course,
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
 courseRoute.get('/courses/:id', requestValidation(getCourseRequest), async (req, res) => {
   try {
     const selectedFields = '_id title summary description tutor coverImage price sale category isPublic isFinish sections ratings totalRegistered';
@@ -408,6 +429,9 @@ courseRoute.patch('/courses/:id/buy', authentication, requestValidation(buyCours
       foundInHotCourse.totalRegisteredLastWeek = course.totalRegisteredLastWeek;
       await foundInHotCourse.save();
     }
+
+    req.user.wishlist = req.user.wishlist.filter((_course) => _course.couseId !== course._id.toString());
+    await req.user.save();
 
     sendPurchasedNotification(req.user.email, req.user.fullname, course.title);
 
