@@ -1,3 +1,5 @@
+const https = require('https');
+const fs = require('fs');
 const express = require("express");
 require("./db/mongoose.db");
 require('./db/clearTotalRegisteredLastWeek.db');
@@ -29,11 +31,26 @@ app.use(lectureRoute);
 app.use(sectionRoute);
 app.use(ratingRoute);
 
-app.get('*', (_, res) => {
-  res.status(404).send();
-});
+if (process.env.PHASE === 'DEVELOPMENT') {
+  const port = process.env.PORT || 8080;
 
-const port = process.env.PORT || 8080;
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });  
+}
+else {
+  const privateKey = fs.readFileSync('/etc/letsencrypt/live/nodemy-apis.online/privkey.pem', 'utf8');
+  const certificate = fs.readFileSync('/etc/letsencrypt/live/nodemy-apis.online/cert.pem', 'utf8');
+  const ca = fs.readFileSync('/etc/letsencrypt/live/nodemy-apis.online/chain.pem', 'utf8');
+
+  const credentials = {
+    key: privateKey,
+    cert: certificate,
+    ca
+  };
+
+  const server = https.createServer(credentials, app);
+  server.listen(443, () => {
+    console.log(`Server is running on port 443`);
+  });
+}
