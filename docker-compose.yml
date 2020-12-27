@@ -28,20 +28,17 @@ services:
       - app-network
 
   mongo:
-    container_name: nodemy-app-db
+    container_name: nodemy-db
     image: mongo
     env_file: .env
     environment:
       - MONGO_INITDB_ROOT_USERNAME=$MONGO_USERNAME
       - MONGO_INITDB_ROOT_PASSWORD=$MONGO_PASSWORD
     volumes:
-      - dbdata:/home/nodemy-db
+      - /root/nodemy-db:/home/nodemy-db
     networks:
       - app-network
 
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  dbdata:

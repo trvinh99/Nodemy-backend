@@ -31,6 +31,12 @@ app.use(lectureRoute);
 app.use(sectionRoute);
 app.use(ratingRoute);
 
+app.use('*', (_, res) => {
+  res.status(404).send({
+    error: 'Not Found',
+  });
+});
+
 if (process.env.PHASE === 'DEVELOPMENT') {
   const port = process.env.PORT || 8080;
 
