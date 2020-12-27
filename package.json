@@ -4,7 +4,7 @@
   "description": "Backend for Nodemy web app",
   "main": "src/app.js",
   "scripts": {
-    "dev": "env-cmd -f ./environment/dev.env nodemon src/app.js"
+    "dev": "env-cmd -f .env nodemon src/app.js"
   },
   "keywords": [
     "Express",

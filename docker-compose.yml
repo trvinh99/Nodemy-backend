@@ -8,11 +8,12 @@ services:
     image: nodemy-image
     container_name: nodemy-container
     restart: unless-stopped
+    env_file: .env
     environment:
-      - JWT_SECRET=c9b64219-ce51-4a0f-aeda-17f0b6c48309-group03-Nodemy
-      - MONGODB_URL=mongodb://group03:Hello123@127.0.0.1:27017/nodemy-production?authSource=admin
-      - SENDGRID_API_KEY=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
-      - HOST=http://206.189.89.232
+      - JWT_SECRET=$JWT_SECRET
+      - MONGODB_URL=$MONGODB_URL
+      - SENDGRID_API_KEY=$SENDGRID_API_KEY
+      - HOST=$HOST
     ports:
       - "80:8080"
     volumes:
@@ -27,8 +28,8 @@ services:
     container_name: nodemy-db
     restart: unless-stopped
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=group03
-      - MONGO_INITDB_ROOT_PASSWORD=Hello123
+      - MONGO_INITDB_ROOT_USERNAME=$MONGO_USERNAME
+      - MONGO_INITDB_ROOT_PASSWORD=$MONGO_PASSWORD
     volumes:
       - dbdata:/data/db
     networks:
