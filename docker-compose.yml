@@ -35,13 +35,10 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=$MONGO_USERNAME
       - MONGO_INITDB_ROOT_PASSWORD=$MONGO_PASSWORD
     volumes:
-      - dbdata:/home/nodemy-db
+      - /home/nodemy-db:/home/nodemy-db
     networks:
       - app-network
 
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  dbdata:

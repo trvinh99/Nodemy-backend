@@ -1,6 +1,7 @@
 FROM node:14.15.3
 
 RUN mkdir -p /home/nodemy-app
+RUN mkdir -p /home/nodemy-db
 
 WORKDIR /home/nodemy-app
 
