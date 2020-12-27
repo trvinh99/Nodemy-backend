@@ -1,14 +1,35 @@
 const mongoose = require('mongoose');
 
-mongoose.connect(process.env.MONGODB_URL, {
+let url = '';
+
+if (process.env.PHASE === 'PRODUCTION') {
+  const {
+    MONGO_USERNAME,
+    MONGO_PASSWORD,
+    MONGO_HOSTNAME,
+    MONGO_PORT,
+    MONGO_DB
+  } = process.env;
+  
+  url = `mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOSTNAME}:${MONGO_PORT}/${MONGO_DB}?authSource=admin`;
+}
+else {
+  url = 'mongodb://127.0.0.1:27017/nodemy-development'
+}
+
+const options = {
   useNewUrlParser: true,
   useCreateIndex: true,
   useFindAndModify: true,
-  useUnifiedTopology: true,
-})
+  reconnectTries: Number.MAX_VALUE,
+  reconnectInterval: 500,
+  connectTimeoutMS: 10000,
+};
+
+mongoose.connect(url, options)
 .then(() => {
-  console.log('Succeed to connect to database');
+  console.log('MongoDB is connected');
 })
-.catch((error) => {
-  console.log(error);
+.catch((err) => {
+  console.log(err);
 });

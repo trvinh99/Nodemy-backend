@@ -1,40 +1,44 @@
-version: '3'
-
+version: "3"
 services:
-  nodejs:
+  nodemy-app:
+    container_name: nodemy-app
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile
-    image: nodemy-image
-    container_name: nodemy-container
-    restart: unless-stopped
+    env_file: .env
     environment:
-      - JWT_SECRET=c9b64219-ce51-4a0f-aeda-17f0b6c48309-group03-Nodemy
-      - MONGODB_URL=mongodb://group03:Hello123@127.0.0.1:27017/nodemy-development?authSource=admin
-      - SENDGRID_API_KEY=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
-      - HOST=http://206.189.89.232
+      - MONGO_USERNAME=$MONGO_USERNAME
+      - MONGO_PASSWORD=$MONGO_PASSWORD
+      - MONGO_HOSTNAME=mongo
+      - MONGO_PORT=$MONGO_PORT
+      - MONGO_DB=$MONGO_DB
+      - JWT_SECRET=$JWT_SECRET
+      - SENDGRID_API_KEY=$SENDGRID_API_KEY
+      - HOST=$HOST
+      - PHASE=$PHASE
     ports:
       - "80:8080"
-    volumes:
-      - .:/home/node/app
-      - node_modules:/home/node/app/node_modules
+    links:
+      - mongo
     networks:
       - app-network
-    command: ./wait-for.sh db:27017 -- /home/node/app/node_modules/.bin/nodemon app.js
-  db:
+
+  mongo:
+    container_name: nodemy-app-db
     image: mongo
-    container_name: nodemy-db
-    restart: unless-stopped
+    env_file: .env
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=group03
-      - MONGO_INITDB_ROOT_PASSWORD=Hello123
+      - MONGO_INITDB_ROOT_USERNAME=$MONGO_USERNAME
+      - MONGO_INITDB_ROOT_PASSWORD=$MONGO_PASSWORD
     volumes:
-      - dbdata:/data/db
+      - dbdata:/home/nodemy-db
     networks:
       - app-network
+
 networks:
   app-network:
     driver: bridge
+
 volumes:
   dbdata:
-  node_modules:

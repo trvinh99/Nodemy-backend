@@ -1,13 +1,11 @@
 FROM node:14.15.3
 
-WORKDIR /src
+RUN mkdir -p /home/nodemy-app
 
-COPY ["package.json", "package-lock.json*", "./"]
+WORKDIR /home/nodemy-app
 
-RUN npm install
-
-COPY . .
+COPY . /home/nodemy-app
 
 EXPOSE 8080
 
-CMD ["node", "app.js"]
+CMD [ "npm", "start" ]
