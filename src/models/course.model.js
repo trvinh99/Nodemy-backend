@@ -199,5 +199,16 @@ courseSchema.statics.increaseTotalViewed = async (courseId = '') => {
   catch { /** ignored */ }
 };
 
+courseSchema.statics.getBasicInfoOfSingleCourse = async (courseId = '') => {
+  const course = await Course.findById(courseId).select('_id title summary tutor price sale category isPublic isFinish totalRegistered');
+  if (!course || !course.isPublic) {
+    throw new Error();
+  }
+
+  delete course.isPublic;
+
+  return course;
+};
+
 const Course = mongoose.model("Course", courseSchema);
 module.exports = Course;

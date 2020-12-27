@@ -388,4 +388,50 @@ userRoute.patch('/users/remove-course-from-wishlist', authentication, requestVal
   }
 });
 
+userRoute.get('/users/wishlist', authentication, async (req, res) => {
+  try {
+    const courses = [];
+
+    for (let i = 0; i < req.user.wishlist.length; ++i) {
+      try {
+        const course = await Course.getBasicInfoOfSingleCourse(req.user.wishlist[i].courseId);
+        courses.push(course);
+      }
+      catch { /** ignored */ }
+    }
+
+    res.send({
+      courses,
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.get('/users/bought', authentication, async (req, res) => {
+  try {
+    const courses = [];
+
+    for (let i = 0; i < req.user.boughtCourses.length; ++i) {
+      try {
+        const course = await Course.getBasicInfoOfSingleCourse(req.user.boughtCourses[i].courseId);
+        courses.push(course);
+      }
+      catch { /** ignored */ }
+    }
+
+    res.send({
+      courses,
+    })
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
 module.exports = userRoute;

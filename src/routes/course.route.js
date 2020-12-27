@@ -218,21 +218,13 @@ courseRoute.get('/courses/hot', async (_, res) => {
 
 courseRoute.get('/courses/single-basic-info/:id', requestValidation(getCourseRequest), async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id).select('_id title summary tutor price sale category isPublic isFinish totalRegistered');
-    if (!course || !course.isPublic) {
-      return res.status(404).send({
-        error: 'Found no course!',
-      });
-    }
-
-    delete course.isPublic;
     res.send({
-      course,
+      course: await Course.getBasicInfoOfSingleCourse(req.params.id),
     });
   }
   catch (error) {
-    res.status(500).send({
-      error: 'Internal Server Error',
+    res.status(404).send({
+      error: 'Found no course!',
     });
   }
 });
