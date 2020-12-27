@@ -17,6 +17,8 @@ services:
       - SENDGRID_API_KEY=$SENDGRID_API_KEY
       - HOST=$HOST
       - PHASE=$PHASE
+    volumes:
+      - /etc/letsencrypt:/home/nodemy-app/letsencrypt
     ports:
       - "443:443"
     links:

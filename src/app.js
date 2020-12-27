@@ -39,9 +39,9 @@ if (process.env.PHASE === 'DEVELOPMENT') {
   });  
 }
 else {
-  const privateKey = fs.readFileSync('./ssl/privkey.pem', 'utf8');
-  const certificate = fs.readFileSync('./ssl/cert.pem', 'utf8');
-  const ca = fs.readFileSync('./ssl/chain.pem', 'utf8');
+  const privateKey = fs.readFileSync('../letsencrypt/live/nodemy-apis.online/privkey.pem', 'utf8');
+  const certificate = fs.readFileSync('../letsencrypt/live/nodemy-apis.online/cert.pem', 'utf8');
+  const ca = fs.readFileSync('../letsencrypt/live/nodemy-apis.online/chain.pem', 'utf8');
 
   const credentials = {
     key: privateKey,
