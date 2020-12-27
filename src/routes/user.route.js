@@ -14,6 +14,7 @@ const Course = require('../models/course.model');
 const requestValidation = require('../middlewares/requestValidation.middleware');
 const authorization = require('../middlewares/authorization.middleware');
 const authentication = require('../middlewares/authentication.middleware');
+const rolesValidation = require('../middlewares/rolesValidation.middleware');
 
 const registerRequest = require('../requests/user/register.request');
 const verifyActivateTokenRequest = require('../requests/user/verifyActivateToken.request');
@@ -24,14 +25,16 @@ const updateNodemyRequest = require('../requests/user/updateNodemy.request');
 const updateGoogleRequest = require('../requests/user/updateGoogle.request');
 const wishlistRequest = require('../requests/user/wishlist.request');
 const updateLearningProcessRequest = require('../requests/user/updateLearningProcess.request');
+const getListUsers = require('../requests/user/getListUsers.request');
+const verifyUserId = require('../requests/user/verifyUserId.request');
 
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
 
 const updateError = require('../responses/user/update.response');
+const registerError = require('../responses/user/register.response');
 
 const downloader = require('../utils/downloader');
-const registerError = require('../responses/user/register.response');
 
 const userRoute = express.Router();
 
@@ -86,6 +89,11 @@ userRoute.post('/users/:id/verify-activate-token', requestValidation(verifyActiv
 userRoute.post('/users/login-with-nodemy', requestValidation(loginNodemyRequest), async (req, res) => {
   try {
     const user = await User.findByCredentials(req.body.email.toLowerCase(), req.body.password);
+    if (user.isBanned) {
+      return res.status(401).send({
+        error: 'Unable to login!',
+      });
+    }
     const refreshToken = await RefreshToken.generateRefreshToken(user);
     const accessToken = await User.generateAccessToken(refreshToken.token);
 
@@ -134,6 +142,11 @@ userRoute.post('/users/login-with-google', requestValidation(loginGoogleRequest)
       user = new User(userInfo);
       await user.save();
     }
+    else if (user.isBanned) {
+      return res.status(401).send({
+        error: 'Unable to login!',
+      });
+    }
 
     const refreshToken = await RefreshToken.generateRefreshToken(user);
     const accessToken = await User.generateAccessToken(refreshToken.token);
@@ -146,7 +159,7 @@ userRoute.post('/users/login-with-google', requestValidation(loginGoogleRequest)
   }
   catch (error) {
     res.status(401).send({
-      error: 'Unable to login',
+      error: 'Unable to login!',
     });
   }
 });
@@ -426,6 +439,107 @@ userRoute.get('/users/bought', authentication, async (req, res) => {
     res.send({
       courses,
     })
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.get('/users', authentication, rolesValidation(['Admin']), requestValidation(getListUsers), async (req, res) => {
+  try {
+    const usersPerPage = 20;
+    const skip = usersPerPage * (req.query.page - 1);
+
+    const query = {};
+    if (req.query.email) {
+      query.email = {
+        $regex: new RegExp(`${req.query.email}`, 'i'),
+      };
+    }
+
+    const totalUsers = await User.find(query).countDocuments();
+    const users = await User
+    .find(query)
+    .select('_id fullname email isBanned')
+    .skip(skip)
+    .limit(usersPerPage);
+
+    res.send({
+      users,
+      totalUsers,
+      totalPages: Math.ceil(totalUsers / usersPerPage),
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.patch('/users/ban', authentication, rolesValidation(['Admin']), requestValidation(verifyUserId), async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.status(404).send({
+        error: 'Found no user!',
+      });
+    }
+
+    if (!user.isBanned) {
+      user.isBanned = true;
+      await user.save();
+    }
+
+    res.status(204).send();
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.patch('/users/unban', authentication, rolesValidation(['Admin']), requestValidation(verifyUserId), async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.status(404).send({
+        error: 'Found no user!',
+      });
+    }
+
+    if (user.isBanned) {
+      user.isBanned = false;
+      await user.save();
+    }
+
+    res.status(204).send();
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.patch('/users/become-teacher', authentication, rolesValidation(['Admin']), requestValidation(verifyUserId), async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.status(404).send({
+        error: 'Found no user!',
+      });
+    }
+
+    if (user.accountType === 'Student') {
+      user.accountType = 'Teacher';
+      await user.save();
+    }
+
+    res.status(204).send();
   }
   catch (error) {
     res.status(500).send({
