@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
     environment:
       - JWT_SECRET=c9b64219-ce51-4a0f-aeda-17f0b6c48309-group03-Nodemy
-      - MONGODB_URL=mongodb://group03:Hello123@127.0.0.1:27017/nodemy-development?authSource=admin
+      - MONGODB_URL=mongodb://group03:Hello123@127.0.0.1:27017/nodemy-production?authSource=admin
       - SENDGRID_API_KEY=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
       - HOST=http://206.189.89.232
     ports:
@@ -21,6 +21,7 @@ services:
     networks:
       - app-network
     command: ./wait-for.sh db:27017 -- /home/node/app/node_modules/.bin/nodemon app.js
+
   db:
     image: mongo
     container_name: nodemy-db
@@ -32,9 +33,11 @@ services:
       - dbdata:/data/db
     networks:
       - app-network
+      
 networks:
   app-network:
     driver: bridge
+
 volumes:
   dbdata:
   node_modules:

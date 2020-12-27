@@ -1,13 +1,17 @@
 FROM node:14.15.3
 
-WORKDIR /src
+RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 
-COPY ["package.json", "package-lock.json*", "./"]
+WORKDIR /home/node/app
+
+COPY package*.json ./
+
+USER node
 
 RUN npm install
 
-COPY . .
+COPY --chown=node:node . .
 
 EXPOSE 8080
 
-CMD ["node", "app.js"]
+CMD [ "node", "app.js" ]
