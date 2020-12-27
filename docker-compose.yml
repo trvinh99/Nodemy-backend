@@ -17,8 +17,6 @@ services:
       - SENDGRID_API_KEY=$SENDGRID_API_KEY
       - HOST=$HOST
       - PHASE=$PHASE
-    ports:
-      - "80:8080"
     links:
       - mongo
     networks:
