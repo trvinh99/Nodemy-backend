@@ -3,50 +3,73 @@ const express = require("express");
 const authentication = require("../middlewares/authentication.middleware");
 const Category = require("../models/category.model");
 const requestValidation = require("../middlewares/requestValidation.middleware");
+const Log = require('../models/log.model');
 
 const createCategoryRequest = require("../requests/category/createCategory.request");
 const updateCategoryRequest = require("../requests/category/updateCategory.request");
 
-const categoryError = require("../responses/category/category.response");
+const getListCategoriesRequest = require("../requests/category/getListCategories.request");
+const getCategoryRequest = require("../requests/category/getCategory.request");
+const rolesValidation = require("../middlewares/rolesValidation.middleware");
+const deleteCategoryRequest = require("../requests/category/deleteCategory.request");
+const updateCategoryError = require("../responses/category/updateCategory.response");
+const createCategoryError = require("../responses/category/createCategory.response");
 
 const categoryRoute = express.Router();
 
-categoryRoute.get("/categories", async (req, res) => {
+categoryRoute.get("/categories", requestValidation(getListCategoriesRequest), async (req, res) => {
   try {
-    const categories = await Category.find({ name: req.query.name });
+    const query = {}
+    if (req.query.name.trim()) {
+      query.name = {
+        $regex: new RegExp(`${req.query.name}`, 'i'),
+      };
+    }
+
+    const categories = await Category.find(query);
     res.send({ categories });
   }
   catch (error) {
+    const log = new Log({
+      location: 'Get list category category.route.js',
+      message: error.message,
+    });
+    await log.save();
+
     res.status(500).send({ error: "Internal Server Error" });
   }
 });
 
-categoryRoute.get("/categories/:id", async (req, res) => {
+categoryRoute.get("/categories/:id", requestValidation(getCategoryRequest), async (req, res) => {
   try {
-    if (req.params.id.length !== 24) {
-      throw new Error("Format of category id is invalid!");
-    }
-
     const category = await Category.findById(req.params.id);
     if (!category) {
-      res.status(404).send({ error: "Found no category!" });
+      return res.status(404).send({ error: "Found no category!" });
     }
 
     res.send({ category });
   }
   catch (error) {
-    res.status(404).send({ error: "Found no category!" });
+    const log = new Log({
+      location: 'Get category category.route.js',
+      message: error.message,
+    });
+    await log.save();
+
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
   }
 });
 
-categoryRoute.post("/categories", authentication, requestValidation(createCategoryRequest), async (req, res) => {
+categoryRoute.post("/categories", authentication, rolesValidation(['Admin']), requestValidation(createCategoryRequest), async (req, res) => {
   try {
     const category = new Category(req.body);
 
     if (req.body.parentCategory) {
       const parentCategory = await Category.findById(category.parentCategory);
       if (!parentCategory) {
-        res.status(404).send({ error: "Found no parent category!" });
+        return res.status(404).send({ error: "Found no parent category!" });
       }
       parentCategory.subCategories.push({ category: category._id.toString() });
       await parentCategory.save();
@@ -57,47 +80,37 @@ categoryRoute.post("/categories", authentication, requestValidation(createCatego
     res.status(201).send({ category });
   }
   catch (error) {
-    res.status(400).send({
-      error: categoryError.createCategoryError(error),
-    });
+    createCategoryError(res, error);
   }
 });
 
-categoryRoute.delete("/categories/:id", authentication, async (req, res) => {
+categoryRoute.delete("/categories/:id", authentication, rolesValidation(['Admin']), requestValidation(deleteCategoryRequest), async (req, res) => {
   try {
-    const categoryId = req.params.id;
-    if (categoryId.length !== 24) {
-      throw new Error("Format of category id is invalid!");
-    }
-
-    const category = await Category.findById(categoryId);
+    const category = await Category.findById(req.params.id);
     if (!category) {
-      res.status(404).send({ error: "Found no category" });
+      return res.status(404).send({ error: "Found no category" });
     }
 
     if (category.subCategories.length !== 0) {
       return res.status(400).send({
-        error: "Can not delete category has sub categories",
+        error: "Can not delete category has sub categories!",
       });
     }
 
     if (category.totalCourses > 0) {
       return res.status(400).send({
-        error: 'Can not delete category has course(s)',
+        error: 'Can not delete category has course(s)!',
       });
     }
     
     const parentCategory = await Category.findById(category.parentCategory);
-    if (!parentCategory) {
-      return res.status(404).send({
-        error: `Found no parent category with id ${category.parentCategory}`,
-      });
+    if (parentCategory) {
+      parentCategory.subCategories = parentCategory.subCategories.filter((subCategory) => 
+        subCategory.category !== category._id.toString());
+      await parentCategory.save();
     }
-    parentCategory.subCategories = parentCategory.subCategories.filter((subCategory) => 
-      subCategory.category !== category._id.toString());
 
     await category.delete();
-    await parentCategory.save();
 
     res.send({ category });
   }
@@ -112,7 +125,7 @@ categoryRoute.patch("/categories/:id", authentication, requestValidation(updateC
   try {
     const category = await Category.findById(req.params.id);
     if (!category) {
-      res.status(404).send({ error: "Found no category" });
+      return res.status(404).send({ error: "Found no category" });
     }
 
     let hasChanged = false;
@@ -130,7 +143,7 @@ categoryRoute.patch("/categories/:id", authentication, requestValidation(updateC
     if (typeof req.body.parentCategory !== 'undefined' && category.parentCategory !== req.body.parentCategory) {
       const parentCategory = await Category.findById(req.body.parentCategory);
       if (!parentCategory) {
-        res.status(404).send({ error: "Found no parent category" });
+        return res.status(404).send({ error: "Found no parent category" });
       }
 
       const oldParentCategory = await Category.findById(category.parentCategory);
@@ -150,8 +163,20 @@ categoryRoute.patch("/categories/:id", authentication, requestValidation(updateC
     res.send({ category });
   }
   catch (error) {
-    res.status(400).send({
-      error: categoryError.updateCategoryError(error),
+    updateCategoryError(res, error);
+  }
+});
+
+categoryRoute.get('/categories/most-registered', async (_, res) => {
+  try {
+    const categories = await Category.find().sort({ totalRegisteredLastWeek: 'desc' }).limit(6);
+    res.send({
+      categories,
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
     });
   }
 });

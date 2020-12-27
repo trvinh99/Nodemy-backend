@@ -4,7 +4,7 @@ const getListCoursesRequest = ({ query }) => {
   const queryKeys = Object.keys(query);
   queryKeys.forEach((key) => {
     if (key !== 'title' && key !== 'page' && key !== 'category') {
-      throw new NodemyResponseError(400, 'Query has redundant field(s)!');
+      throw new NodemyResponseError(400, 'Get course\'s query has redundant field(s)!');
     }
   });
 

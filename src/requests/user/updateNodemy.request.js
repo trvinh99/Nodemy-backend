@@ -1,26 +1,13 @@
 const { isEmail } = require('validator');
 
 const NodemyResponseError = require("../../utils/NodemyResponseError");
+const { objectConstraints, stringConstraints } = require('../../utils/validator');
 
 const updateNodemyRequest = ({ body }) => {
-  if (typeof body !== 'object') {
-    throw new NodemyResponseError(400, 'Type of update account\'s body must be object!');
-  }
-
-  const {
-    email,
-    password,
-    fullname,
-    ...rest
-  } = body;
-  if (Object.keys(rest).length !== 0) {
-    throw new NodemyResponseError(400, 'Update account\'s body has redundant field(s)!');
-  }
+  const { email, password, fullname } = objectConstraints(body, "Update account's body", ['email', 'password', 'fullname']);
 
   if (typeof email !== 'undefined') {
-    if (typeof email !== 'string') {
-      throw new NodemyResponseError(400, 'Type of email must be string!');
-    }
+    stringConstraints(email, 'Email', { maxLength: 100, isRequired: true });
 
     if (!isEmail(email)) {
       throw new NodemyResponseError(400, 'Email is invalid!');
@@ -28,9 +15,7 @@ const updateNodemyRequest = ({ body }) => {
   }
 
   if (typeof password !== 'undefined') {
-    if (typeof password !== 'string') {
-      throw new NodemyResponseError(400, 'Type of password must be string!');
-    }
+    stringConstraints(password, 'Password', { minLength: 8, isRequired: true });
 
     if (password.length < 8) {
       throw new NodemyResponseError(400, 'Password must contain at least 8 characters!');
@@ -38,13 +23,7 @@ const updateNodemyRequest = ({ body }) => {
   }
 
   if (typeof fullname !== 'undefined') {
-    if (typeof fullname !== 'string') {
-      throw new NodemyResponseError(400, 'Type of fullname must be string!');
-    }
-
-    if (!fullname.trim()) {
-      throw new NodemyResponseError(400, 'Fullname is required!!');
-    }
+    stringConstraints(fullname, 'Fullname', { maxLength: 64, isRequired: true });
   }
 };
 

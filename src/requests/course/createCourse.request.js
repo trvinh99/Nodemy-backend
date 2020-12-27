@@ -1,12 +1,9 @@
 const { isURL } = require('validator');
 
 const NodemyResponseError = require("../../utils/NodemyResponseError");
+const { objectConstraints, stringConstraints, numberConstraints, isObjectId, checkType } = require('../../utils/validator');
 
 const createCourseRequest = ({ body }) => {
-  if (typeof body !== 'object') {
-    throw new NodemyResponseError(400, 'Type of create course\'s body is invalid!');
-  }
-
   const {
     title,
     summary,
@@ -17,52 +14,15 @@ const createCourseRequest = ({ body }) => {
     category,
     isFinish,
     isPublic,
-    ...rest
-  } = body;
+  } = objectConstraints(body, "Create course's body", ['title', 'summary', 'description', 'coverImage', 'price', 'sale', 'category', 'isFinish', 'isPublic']);
 
-  if (Object.keys(rest).length !== 0) {
-    throw new NodemyResponseError(400, 'Create course\'s body must be object!');
-  }
+  stringConstraints(title, "Course's title", { minLength: 1, maxLength: 60, isRequired: true });
 
-  if (typeof title !== 'string') {
-    throw new NodemyResponseError(400, "Type of title must be string!");
-  }
+  stringConstraints(summary, "Course's summary", { minLength: 1, maxLength: 400, isRequired: true });
 
-  if (!title.trim()) {
-    throw new NodemyResponseError(400, "Title is required!");
-  }
+  stringConstraints(description, "Course's description", { minLength: 1, maxLength: 1000, isRequired: true });
 
-  if (title.trim().length > 60) {
-    throw new NodemyResponseError(400, "Title must not have more than 60 characters!");
-  }
-
-  if (typeof summary !== 'string') {
-    throw new NodemyResponseError(400, "Type of summary must be string!");
-  }
-
-  if (!summary.trim()) {
-    throw new NodemyResponseError(400, "Summary is required!");
-  }
-
-  if (summary.trim().length > 400) {
-    throw new NodemyResponseError(400, "Summary must not have more than 400 characters!");
-  }
-
-  if (typeof description !== 'string') {
-    throw new NodemyResponseError(400, "Type of description must be string!");
-  }
-
-  if (!description.trim()) {
-    throw new NodemyResponseError(400, "Description is required!");
-  }
-
-  if (description.trim().length > 1000) {
-    throw new NodemyResponseError(400, "Description must not have more than 1000 characters!");
-  }
-
-  if (typeof coverImage !== 'string') {
-    throw new NodemyResponseError(400, "Type of cover image must be string!");
-  }
+  stringConstraints(coverImage, "Course's cover image", { minLength: 24, isRequired: true });
 
   if (!isURL(coverImage)) {
     throw new NodemyResponseError(400, "Cover image must be URL!");
@@ -72,37 +32,15 @@ const createCourseRequest = ({ body }) => {
     throw new NodemyResponseError(400, "Format of cover image is invalid!");
   }
 
-  if (typeof price !== 'number') {
-    throw new NodemyResponseError(400, "Type of price must be number!");
-  }
+  numberConstraints(price, "Course's price", { min: 0 });
 
-  if (price < 0) {
-    throw new NodemyResponseError(400, "Price can not less than 0!");
-  }
+  numberConstraints(sale, "Course's sale", { min: 0 });
 
-  if (typeof sale !== 'number') {
-    throw new NodemyResponseError(400, "Type of sale must be number!");
-  }
+  isObjectId(category, "course's category");
 
-  if (price < 0) {
-    throw new NodemyResponseError(400, "Sale can not less than 0!");
-  }
+  checkType(isFinish, 'boolean', "'is course finish'");
 
-  if (typeof category !== 'string') {
-    throw new NodemyResponseError(400, "Type of category is string!");
-  }
-
-  if (category.length !== 24) {
-    throw new NodemyResponseError(400, "Format of category is invalid!");
-  }
-
-  if (typeof isFinish !== 'boolean') {
-    throw new NodemyResponseError(400, "Type of is finish must be boolean!");
-  }
-
-  if (typeof isPublic !== 'boolean') {
-    throw new NodemyResponseError(400, "Type of is public must be boolean!");
-  }
+  checkType(isPublic, 'boolean', "'is course public'");
 };
 
 module.exports = createCourseRequest;

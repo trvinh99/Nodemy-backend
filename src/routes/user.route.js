@@ -4,13 +4,17 @@ const sharp = require('sharp');
 const multer = require('multer');
 const randToken = require('rand-token');
 
+const Log = require('../models/log.model');
 const TempUser = require('../models/tempUser.model');
 const User = require('../models/user.model');
 const RefreshToken = require('../models/refreshToken.model');
+const CourseLecture = require('../models/courseLecture.model');
+const Course = require('../models/course.model');
 
 const requestValidation = require('../middlewares/requestValidation.middleware');
 const authorization = require('../middlewares/authorization.middleware');
 const authentication = require('../middlewares/authentication.middleware');
+const rolesValidation = require('../middlewares/rolesValidation.middleware');
 
 const registerRequest = require('../requests/user/register.request');
 const verifyActivateTokenRequest = require('../requests/user/verifyActivateToken.request');
@@ -19,26 +23,24 @@ const loginGoogleRequest = require('../requests/user/loginGoogle.request');
 const getAvatarRequest = require('../requests/user/getAvatar.request');
 const updateNodemyRequest = require('../requests/user/updateNodemy.request');
 const updateGoogleRequest = require('../requests/user/updateGoogle.request');
+const wishlistRequest = require('../requests/user/wishlist.request');
+const updateLearningProcessRequest = require('../requests/user/updateLearningProcess.request');
+const getListUsers = require('../requests/user/getListUsers.request');
+const verifyUserId = require('../requests/user/verifyUserId.request');
 
 const sendWelcome = require('../emails/welcome.email');
 const sendActivateToken = require('../emails/sendActivateToken.email');
 
-const registerError = require('../responses/user/register.response');
 const updateError = require('../responses/user/update.response');
+const registerError = require('../responses/user/register.response');
 
 const downloader = require('../utils/downloader');
-const NodemyResponseError = require('../utils/NodemyResponseError');
 
 const userRoute = express.Router();
 
 // Create new account
 userRoute.post('/users', requestValidation(registerRequest), async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
-    if (user) {
-      throw new NodemyResponseError(400, 'Email is already exists!');
-    }
-
     const info = {
       email: req.body.email,
       fullname: req.body.fullname,
@@ -87,6 +89,11 @@ userRoute.post('/users/:id/verify-activate-token', requestValidation(verifyActiv
 userRoute.post('/users/login-with-nodemy', requestValidation(loginNodemyRequest), async (req, res) => {
   try {
     const user = await User.findByCredentials(req.body.email.toLowerCase(), req.body.password);
+    if (user.isBanned) {
+      return res.status(401).send({
+        error: 'Unable to login!',
+      });
+    }
     const refreshToken = await RefreshToken.generateRefreshToken(user);
     const accessToken = await User.generateAccessToken(refreshToken.token);
 
@@ -135,6 +142,11 @@ userRoute.post('/users/login-with-google', requestValidation(loginGoogleRequest)
       user = new User(userInfo);
       await user.save();
     }
+    else if (user.isBanned) {
+      return res.status(401).send({
+        error: 'Unable to login!',
+      });
+    }
 
     const refreshToken = await RefreshToken.generateRefreshToken(user);
     const accessToken = await User.generateAccessToken(refreshToken.token);
@@ -147,7 +159,7 @@ userRoute.post('/users/login-with-google', requestValidation(loginGoogleRequest)
   }
   catch (error) {
     res.status(401).send({
-      error: 'Unable to login',
+      error: 'Unable to login!',
     });
   }
 });
@@ -282,6 +294,254 @@ userRoute.patch('/users/update-with-google', authentication, requestValidation(u
     });
   }
   catch {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.patch('/users/learning-process', authentication, requestValidation(updateLearningProcessRequest), async (req, res) => {
+  try {
+    let courseId = '';
+    let foundIndex = -1;
+    for (let i = 0; i < req.user.boughtCourses.length; ++i) {
+      if (req.user.boughtCourses[i].courseId === req.body.courseId) {
+        courseId = req.body.courseId;
+        foundIndex = i;
+        break;
+      }
+    }
+
+    if (!courseId) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    const lecture = await CourseLecture.findById(req.body.currentWatchingLecture);
+    if (!lecture || lecture.courseId !== courseId) {
+      return res.status(404).send({
+        error: 'Found no lecture!',
+      });
+    }
+
+    req.user.boughtCourses[foundIndex].currentWatchingLecture = req.body.currentWatchingLecture;
+    req.user.boughtCourses[foundIndex].currentWatchingTimepoint = req.body.currentWatchingTimepoint;
+    await req.user.save();
+
+    res.send({
+      user: req.user,
+    });
+  }
+  catch (error) {
+    const log = new Log({
+      location: 'Update learning process user.model.js',
+      message: error.message,
+    });
+    await log.save();
+
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.patch('/users/add-course-to-wishlist', authentication, requestValidation(wishlistRequest), async (req, res) => {
+  try {
+    for (let i = 0; i < req.user.boughtCourses.length; ++i) {
+      if (req.user.boughtCourses[i].courseId === req.body.courseId) {
+        return res.status(400).send({
+          error: 'You can not add an already purchased course to wishlist!',
+        });
+      }
+    }
+
+    for (let i = 0; i < req.user.wishlist.length; ++i) {
+      if (req.user.wishlist[i].courseId === req.body.courseId) {
+        return res.status(400).send({
+          error: 'You have already added this course to wishlist!',
+        });
+      }
+    }
+
+    const course = await Course.findById(req.body.courseId);
+    if (!course) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    req.user.wishlist = [...req.user.wishlist, { courseId: req.body.courseId }];
+    await req.user.save();
+
+    res.send({
+      user: req.user
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.patch('/users/remove-course-from-wishlist', authentication, requestValidation(wishlistRequest), async (req, res) => {
+  try {
+    req.user.wishlist = req.user.wishlist.filter((course) => course.courseId !== req.body.courseId);
+    await req.user.save();
+
+    res.send({
+      user: req.user,
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.get('/users/wishlist', authentication, async (req, res) => {
+  try {
+    const courses = [];
+
+    for (let i = 0; i < req.user.wishlist.length; ++i) {
+      try {
+        const course = await Course.getBasicInfoOfSingleCourse(req.user.wishlist[i].courseId);
+        courses.push(course);
+      }
+      catch { /** ignored */ }
+    }
+
+    res.send({
+      courses,
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.get('/users/bought', authentication, async (req, res) => {
+  try {
+    const courses = [];
+
+    for (let i = 0; i < req.user.boughtCourses.length; ++i) {
+      try {
+        const course = await Course.getBasicInfoOfSingleCourse(req.user.boughtCourses[i].courseId);
+        courses.push(course);
+      }
+      catch { /** ignored */ }
+    }
+
+    res.send({
+      courses,
+    })
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.get('/users', authentication, rolesValidation(['Admin']), requestValidation(getListUsers), async (req, res) => {
+  try {
+    const usersPerPage = 20;
+    const skip = usersPerPage * (req.query.page - 1);
+
+    const query = {};
+    if (req.query.email) {
+      query.email = {
+        $regex: new RegExp(`${req.query.email}`, 'i'),
+      };
+    }
+
+    const totalUsers = await User.find(query).countDocuments();
+    const users = await User
+    .find(query)
+    .select('_id fullname email isBanned')
+    .skip(skip)
+    .limit(usersPerPage);
+
+    res.send({
+      users,
+      totalUsers,
+      totalPages: Math.ceil(totalUsers / usersPerPage),
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.patch('/users/ban', authentication, rolesValidation(['Admin']), requestValidation(verifyUserId), async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.status(404).send({
+        error: 'Found no user!',
+      });
+    }
+
+    if (!user.isBanned) {
+      user.isBanned = true;
+      await user.save();
+    }
+
+    res.status(204).send();
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.patch('/users/unban', authentication, rolesValidation(['Admin']), requestValidation(verifyUserId), async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.status(404).send({
+        error: 'Found no user!',
+      });
+    }
+
+    if (user.isBanned) {
+      user.isBanned = false;
+      await user.save();
+    }
+
+    res.status(204).send();
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.patch('/users/become-teacher', authentication, rolesValidation(['Admin']), requestValidation(verifyUserId), async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.status(404).send({
+        error: 'Found no user!',
+      });
+    }
+
+    if (user.accountType === 'Student') {
+      user.accountType = 'Teacher';
+      await user.save();
+    }
+
+    res.status(204).send();
+  }
+  catch (error) {
     res.status(500).send({
       error: 'Internal Server Error',
     });

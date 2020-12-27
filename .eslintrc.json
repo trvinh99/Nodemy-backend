@@ -25,6 +25,8 @@
     "consistent-return": "off",
     "no-plusplus": "off",
     "radix": "off",
-    "no-prototype-builtins": "off"
+    "no-prototype-builtins": "off",
+    "valid-typeof": "off",
+    "no-param-reassign": "off"
   }
 }

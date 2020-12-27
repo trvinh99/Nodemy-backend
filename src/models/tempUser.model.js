@@ -17,6 +17,7 @@ const tempUserSchema = new mongoose.Schema({
         throw new Error('Email is invalid!');
       }
     },
+    maxlength: 100,
   },
   fullname: {
     type: String,

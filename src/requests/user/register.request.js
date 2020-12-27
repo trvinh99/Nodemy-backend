@@ -1,44 +1,23 @@
 const validator = require('validator');
 
 const NodemyResponseError = require("../../utils/NodemyResponseError");
+const { objectConstraints, stringConstraints } = require('../../utils/validator');
 
 const registerRequest = ({ body }) => {
-  if (typeof body !== 'object') {
-    throw new NodemyResponseError(400, 'Type of register\'s body must be object!');
-  }
-
   const {
     email,
     fullname,
     password,
-    ...rest
-  } = body;
-  if (Object.keys(rest).length !== 0) {
-    throw new NodemyResponseError(400, 'Register body has redundant field(s)!');
-  }
+  } = objectConstraints(body, "Register's body", ['email', 'fullname', 'password']);
 
-  if (typeof email !== 'string') {
-    throw new NodemyResponseError(400, 'Type of email must be string!');
-  }
+  stringConstraints(email, 'Email', { maxLength: 100, isRequired: true });
 
-  if (typeof fullname !== 'string') {
-    throw new NodemyResponseError(400, 'Type of fullname must be string!');
-  }
+  stringConstraints(fullname, 'Fullname', { maxLength: 64, isRequired: true });
 
-  if (typeof password !== 'string') {
-    throw new NodemyResponseError(400, 'Type of password must be string!');
-  }
+  stringConstraints(password, 'Password', { minLength: 8, isRequired: true });
 
   if (!validator.isEmail(email)) {
     throw new NodemyResponseError(400, 'Email is invalid!');
-  }
-
-  if (!fullname.trim()) {
-    throw new NodemyResponseError(400, 'Fullname is required!');
-  }
-
-  if (password.length < 8) {
-    throw new NodemyResponseError(400, 'Password must contain at least 8 characters!');
   }
 };
 
