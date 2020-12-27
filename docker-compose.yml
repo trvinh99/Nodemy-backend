@@ -29,7 +29,7 @@ services:
     command: ./wait-for.sh db:27017 -- /home/node/app/node_modules/.bin/nodemon src/app.js
 
   db:
-    image: mongo
+    image: mongo:4.1.8-xenial
     container_name: nodemy-db
     restart: unless-stopped
     environment:
