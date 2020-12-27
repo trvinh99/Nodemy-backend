@@ -1,8 +1,8 @@
 const express = require("express");
-require("./db/mongoose.db");
-require('./db/clearTotalRegisteredLastWeek.db');
+require("./src/db/mongoose.db");
+require('./src/db/clearTotalRegisteredLastWeek.db');
 
-const cors = require("./middlewares/cors.middleware");
+const cors = require("./src/middlewares/cors.middleware");
 
 const app = express();
 
@@ -15,12 +15,12 @@ app.get("/", (_, res) => {
   });
 });
 
-const userRoute = require("./routes/user.route");
-const categoryRoute = require("./routes/category.route");
-const courseRoute = require('./routes/course.route');
-const lectureRoute = require('./routes/lecture.route');
-const sectionRoute = require('./routes/section.route');
-const ratingRoute = require('./routes/rating.route');
+const userRoute = require("./src/routes/user.route");
+const categoryRoute = require("./src/routes/category.route");
+const courseRoute = require('./src/routes/course.route');
+const lectureRoute = require('./src/routes/lecture.route');
+const sectionRoute = require('./src/routes/section.route');
+const ratingRoute = require('./src/routes/rating.route');
 
 app.use(userRoute);
 app.use(categoryRoute);

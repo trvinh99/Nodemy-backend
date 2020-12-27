@@ -2,9 +2,9 @@
   "name": "nodemy-backend",
   "version": "1.0.0",
   "description": "Backend for Nodemy web app",
-  "main": "src/app.js",
+  "main": "app.js",
   "scripts": {
-    "dev": "env-cmd -f .env nodemon src/app.js"
+    "dev": "env-cmd -f .env nodemon app.js"
   },
   "keywords": [
     "Express",
