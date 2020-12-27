@@ -2,8 +2,9 @@
   "name": "nodemy-backend",
   "version": "1.0.0",
   "description": "Backend for Nodemy web app",
-  "main": "app.js",
+  "main": "src/app.js",
   "scripts": {
+    "start": "npm i; node .",
     "dev": "env-cmd -f .env nodemon app.js"
   },
   "keywords": [
