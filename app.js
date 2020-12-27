@@ -1,5 +1,5 @@
 const express = require("express");
-require("./src/db/mongoose.db");
+const db = require("./db");
 require('./src/db/clearTotalRegisteredLastWeek.db');
 
 const cors = require("./src/middlewares/cors.middleware");
