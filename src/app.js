@@ -31,9 +31,9 @@ app.use(lectureRoute);
 app.use(sectionRoute);
 app.use(ratingRoute);
 
-const port = process.env.PORT || 8080;
-
 if (process.env.PHASE === 'DEVELOPMENT') {
+  const port = process.env.PORT || 8080;
+
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
   });  
@@ -51,6 +51,6 @@ else {
 
   const server = https.createServer(credentials, app);
   server.listen(443, () => {
-    console.log(`Server is running on port ${port}`);
+    console.log(`Server is running on port 443`);
   });
 }
