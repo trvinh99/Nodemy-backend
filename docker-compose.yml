@@ -18,7 +18,8 @@ services:
       - HOST=$HOST
       - PHASE=$PHASE
     volumes:
-      - /etc/letsencrypt:/home/nodemy-app/letsencrypt
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/lib/letsencrypt:/var/lib/letsencrypt
     ports:
       - "443:443"
     links:
