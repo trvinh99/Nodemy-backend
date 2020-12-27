@@ -108,3 +108,5 @@ dist
 .vscode
 
 environment
+
+mongoose.db.js
