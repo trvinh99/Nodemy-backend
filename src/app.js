@@ -1,3 +1,5 @@
+const https = require('https');
+const fs = require('fs');
 const express = require("express");
 require("./db/mongoose.db");
 require('./db/clearTotalRegisteredLastWeek.db');
@@ -30,6 +32,25 @@ app.use(sectionRoute);
 app.use(ratingRoute);
 
 const port = process.env.PORT || 8080;
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+
+if (process.env.PHASE === 'DEVELOPMENT') {
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });  
+}
+else {
+  const privateKey = fs.readFileSync('../ssl/privkey.pem', 'utf8');
+  const certificate = fs.readFileSync('../ssl/cert.pem', 'utf8');
+  const ca = fs.readFileSync('../ssl/chain.pem', 'utf8');
+
+  const credentials = {
+    key: privateKey,
+    cert: certificate,
+    ca
+  };
+
+  const server = https.createServer(credentials, app);
+  server.listen(443, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
