@@ -58,7 +58,7 @@ tempUserSchema.statics.validateActivateToken = async (userId, token, password) =
     throw new NodemyResponseError(400, 'Activate token is not correct!');
   }
 
-  if ((new Date()).valueOf > (new Date(tempUser.createdAt)).valueOf() + 600000) {
+  if ((new Date()).valueOf > (new Date(tempUser.createdAt)).valueOf() + 300000) {
     throw new NodemyResponseError(400, 'Activate token is expired!');
   }
 
