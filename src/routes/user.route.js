@@ -41,6 +41,13 @@ const userRoute = express.Router();
 // Create new account
 userRoute.post('/users', requestValidation(registerRequest), async (req, res) => {
   try {
+    const user = await User.findOne({ email: req.body.email });
+    if (user) {
+      return res.status(400).send({
+        error: 'Email is already exists!',
+      });
+    }
+
     const info = {
       email: req.body.email,
       fullname: req.body.fullname,
@@ -55,7 +62,7 @@ userRoute.post('/users', requestValidation(registerRequest), async (req, res) =>
         tempUser.delete();
       }
       catch { /** ignored */ }
-    }, 660000);
+    }, 300000); // 5 minutes
 
     res.status(201).send({
       user: tempUser,
