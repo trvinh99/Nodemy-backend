@@ -8,7 +8,7 @@ const registerError = (res, { code, message = '' }) => {
 
   let errorMessage = message;
   if (message.includes('duplicate')) {
-    errorMessage = 'Email is already exists!';
+    errorMessage = "This account's email is being validated! Please try again in 5 minutes!";
   }
 
   res.status(400).send({
