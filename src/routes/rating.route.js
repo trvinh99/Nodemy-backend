@@ -49,6 +49,13 @@ ratingRoute.post('/ratings', authentication, requestValidation(createRatingReque
     });
     await rating.save();
 
+    let averageRatings = course.averageRatings * course.ratings.length;
+    averageRatings += req.body.rating;
+    course.ratings.push({ rating: rating._id.toString() });
+    averageRatings /= course.ratings.length;
+    course.averageRatings = averageRatings;
+    await course.save();
+
     res.status(201).send({
       rating,
     });
@@ -89,6 +96,21 @@ ratingRoute.patch('/ratings/:courseId', authentication, requestValidation(update
       }
     });
 
+    if (req.body.rating) {
+      const course = await Course.findById(req.params.courseId);
+      if (!course) {
+        await rating.delete();
+        return res.status(404).send({
+          error: 'Found no course',
+        });
+      }
+
+      let averageRatings = course.averageRatings * course.ratings.length;
+      averageRatings = averageRatings - rating.rating + req.body.rating;
+      course.averageRatings = averageRatings;
+      await course.save();
+    }
+
     if (hasChanged) {
       await rating.save();
     }
@@ -112,6 +134,20 @@ ratingRoute.delete('/ratings/:courseId', authentication, requestValidation(delet
         error: 'Found no rating!',
       });
     }
+
+    const course = await Course.findById(req.params.courseId);
+    if (!course) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    let averageRatings = course.averageRatings * course.ratings.length;
+    averageRatings -= rating.rating;
+    course.ratings = course.ratings.filter((ratingId) => ratingId !== rating._id.toString());
+    averageRatings /= course.ratings.length;
+    course.averageRatings = averageRatings;
+    await course.save();
 
     await rating.delete();
 

@@ -79,6 +79,12 @@ const courseSchema = new mongoose.Schema({
       maxlength: 24,
     },
   }],
+  averageRatings: {
+    type: Number,
+    required: true,
+    default: 0,
+    min: 0,
+  },
   totalRegistered: {
     type: Number,
     min: 0,
@@ -107,6 +113,7 @@ courseSchema.methods.toJSON = function () {
 
   delete courseObj.coverImage;
   delete courseObj.createAt;
+  delete courseObj.ratings;
   delete courseObj.__v;
 
   courseObj.coverImage = `${process.env.HOST}/courses/${course._id.toString()}/cover-image`;
@@ -122,6 +129,7 @@ courseSchema.statics.formatListCoursesWhenSelect = async (courses = []) => {
         ...courses[i]._doc,
         coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
         categoryName: foundCategoryName,
+        totalRating: courses[i].ratings.length,
       };
     }
     catch (error) {
