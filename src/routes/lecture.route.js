@@ -181,7 +181,7 @@ lectureRoute.get('/lectures/:sectionId', authentication, async (req, res) => {
   }
 });
 
-lectureRoute.get('/lectures/:id/video', authentication, async (req, res) => {
+lectureRoute.get('/lectures/:id/video', async (req, res) => {
   try {
     const decode = jwt.verify(req.query.token, process.env.JWT_SECRET);
     const user = await User.findById(decode._id);
