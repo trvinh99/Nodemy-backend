@@ -112,7 +112,6 @@ courseSchema.methods.toJSON = function () {
   const courseObj = course.toObject();
 
   delete courseObj.coverImage;
-  delete courseObj.createAt;
   delete courseObj.ratings;
   delete courseObj.__v;
 
@@ -123,20 +122,30 @@ courseSchema.methods.toJSON = function () {
 
 courseSchema.statics.formatListCoursesWhenSelect = async (courses = []) => {
   for (let i = 0; i < courses.length; ++i) {
+    let { isNew } = courses[i]._doc;
+    if (typeof courses[i].isNew === 'boolean') {
+      isNew = courses[i].isNew;
+    }
+    else {
+      isNew = (new Date()).valueOf() - 7776000000 <= (new Date(courses[i].createdAt)).valueOf();
+    }
+
     try {
       const foundCategoryName = (await Category.findById(courses[i].category)).name;
       courses[i] = {
         ...courses[i]._doc,
         coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
         categoryName: foundCategoryName,
-        totalRating: courses[i].ratings.length,
+        totalRating: courses[i]._doc.ratings.length,
+        isNew,
       };
     }
     catch (error) {
       courses[i] = {
         ...courses[i]._doc,
         coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
-        categoryName: ''
+        categoryName: '',
+        isNew,
       };
     }
   }

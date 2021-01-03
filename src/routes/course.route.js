@@ -26,8 +26,8 @@ courseRoute.post('/courses', authentication, rolesValidation(['Teacher', 'Admin'
   try {
     let coverImage = await downloader(req.body.coverImage);
     coverImage = await sharp(coverImage).resize({
-      height: 400,
-      width: 600,
+      height: 270,
+      width: 480,
     }).png().toBuffer();
 
     const category = await Category.findById(req.body.category);
@@ -180,11 +180,19 @@ courseRoute.get('/courses/top-viewed', async (_, res) => {
 
 courseRoute.get('/courses/new', async (_, res) => {
   try {
+    const current = (new Date()).valueOf() - 7776000000;
+    const start = new Date(current);
+
     const courses = await Course
-    .find()
+    .find({ createdAt: { $gte: start.toISOString() }, isPublic: true })
     .select('_id title summary tutor price sale category isFinish totalRegistered')
-    .sort({ updatedAt: 'desc' })
+    .sort({ createdAt: 'desc' })
     .limit(10);
+
+    for (let i = 0; i < courses.length; ++i) {
+      courses[i]._doc.isNew = true;
+    }
+
     await Course.formatListCoursesWhenSelect(courses);
 
     res.send({

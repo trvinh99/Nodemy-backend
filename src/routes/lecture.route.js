@@ -66,7 +66,7 @@ lectureRoute.post('/lectures', authentication, rolesValidation(['Admin', 'Teache
       sectionId: req.body.sectionId,
       lectureName: req.body.lectureName,
       canPreview: req.body.canPreview === 'Yes',
-      video: req.files.lecture[0].buffer,
+      video: req.files.video[0].buffer,
     });
     await lecture.save();
 
