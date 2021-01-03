@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const jwt = require("jsonwebtoken");
+const { Readable } = require('stream');
 
 const Course = require('../models/course.model');
 const CourseSection = require('../models/courseSection.model');
@@ -207,15 +208,16 @@ lectureRoute.get('/lectures/:id/video', async (req, res) => {
     }
 
     if (hasBought !== -1 || lecture.canPreview) {
-      const stat = fs.statSync(lecture.video);
-      const fileSize = stat.size;
-    
+      const fileSize = lecture.video.toString().length;
+
       if (req.headers.range) {
         const parts = req.headers.range.replace(/bytes=/, "").split("-")
         const start = parseInt(parts[0], 10)
-        const end = parts[1] ? parseInt(parts[1], 10) : fileSize-1;
-        const chunksize = (end - start) + 1
-        const file = fs.createReadStream(lecture.video, {start, end})
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const chunksize = (end - start) + 1;
+        const stream = new Readable();
+        stream.push(lecture.video);
+        stream.push(null);
         const head = {
           'Content-Range': `bytes ${start}-${end}/${fileSize}`,
           'Accept-Ranges': 'bytes',
@@ -223,7 +225,7 @@ lectureRoute.get('/lectures/:id/video', async (req, res) => {
           'Content-Type': 'video/mp4',
         }
         res.writeHead(206, head);
-        file.pipe(res);
+        stream.pipe(res);
       }
       else {
         const head = {
@@ -231,7 +233,10 @@ lectureRoute.get('/lectures/:id/video', async (req, res) => {
           'Content-Type': 'video/mp4',
         };
         res.writeHead(200, head);
-        fs.createReadStream(lecture.video).pipe(res);
+        const stream = new Readable();
+        stream.push(lecture.video);
+        stream.push(null);
+        stream.pipe(res);
       }
     }
     else {
