@@ -63,7 +63,7 @@ courseRoute.get('/courses', bypassAuthentication, requestValidation(getListCours
   try {
     const listCourses = await Course.getListCourses(
       true,
-      req.query.page || 1,
+      parseInt(req.query.page) || 1,
       req.query.title,
       req.query.category,
       req.user ? req.user.boughtCourses : [],
@@ -81,7 +81,10 @@ courseRoute.get('/courses', bypassAuthentication, requestValidation(getListCours
 
 courseRoute.get('/courses/me', authentication, rolesValidation(['Teacher', 'Admin']), async (req, res) => {
   try {
-    const courses = await Course.find({ tutor: req.user._id.toString() });
+    const courses = await Course
+    .find({ tutor: req.user._id.toString() })
+    .select('_id title summary tutor price sale category totalRatings createdAt');
+
     for (let i = 0; i < courses.length; ++i) {
       courses[i] = await courses[i].packCourseContent([], true);
     }
@@ -100,7 +103,7 @@ courseRoute.get('/courses/admin', authentication, rolesValidation(['Admin']), re
   try {
     const listCourses = await Course.getListCourses(
       false,
-      req.query.page || 1,
+      parseInt(req.query.page) || 1,
       req.query.title,
       req.query.category,
       req.user ? req.user.boughtCourses : [],
@@ -160,7 +163,7 @@ courseRoute.get('/courses/top-viewed', bypassAuthentication, async (req, res) =>
   try {
     const courses = await Course
     .find()
-    .select('_id title summary tutor price sale category isFinish totalRegistered')
+    .select('_id title summary tutor price sale category totalRatings createdAt')
     .sort({ totalViewed: 'desc' })
     .limit(10);
     await Course.formatListCoursesWhenSelect(courses);
@@ -309,7 +312,7 @@ courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher', 'A
     }
 
     res.send({
-      course,
+      course: await course.packCourseContent([], true),
     });
   }
   catch (error) {
@@ -366,7 +369,7 @@ courseRoute.delete('/courses/:id', authentication, rolesValidation(['Teacher', '
     await category.save();
 
     res.send({
-      course,
+      course: await course.packCourseContent([], true),
     });
   }
   catch (error) {

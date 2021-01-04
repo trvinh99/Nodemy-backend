@@ -109,7 +109,7 @@ userSchema.statics.generateAccessToken = async (refreshToken = '') => {
   const userId = await RefreshToken.validateRefreshToken(refreshToken);
   const user = await User.findById(userId);
   const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET, {
-    expiresIn: "10800000", // 180 min in ms
+    expiresIn: "24h", // 24 hours
   });
 
   return token;
