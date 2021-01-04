@@ -21,8 +21,7 @@ const options = {
   useNewUrlParser: true,
   useCreateIndex: true,
   useFindAndModify: true,
-  reconnectTries: Number.MAX_VALUE,
-  reconnectInterval: 500,
+  useUnifiedTopology: true,
   connectTimeoutMS: 10000,
 };
 

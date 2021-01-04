@@ -71,21 +71,5 @@ ratingSchema.statics.getListRatings = async (page = 1, courseId = '') => {
   };
 };
 
-ratingSchema.statics.calculateCourseRating = async (courseId = '') => {
-  const ratings = await Rating.find({ courseId });
-  let averageRating = 0;
-  ratings.forEach((rating) => {
-    averageRating += rating.rating;
-  });
-
-  averageRating /= ratings.length;
-  averageRating = averageRating.toFixed(1);
-
-  return {
-    averageRating,
-    totalRatings: ratings.length,
-  };
-};
-
 const Rating = mongoose.model("Rating", ratingSchema);
 module.exports = Rating;

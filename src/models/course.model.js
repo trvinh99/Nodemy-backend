@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const Category = require('./category.model');
+const User = require('./user.model');
 const Log = require('./log.model');
 
 const courseSchema = new mongoose.Schema({
@@ -79,6 +80,12 @@ const courseSchema = new mongoose.Schema({
       maxlength: 24,
     },
   }],
+  totalRatings: {
+    type: Number,
+    required: true,
+    default: 0,
+    min: 0,
+  },
   averageRatings: {
     type: Number,
     required: true,
@@ -103,6 +110,8 @@ const courseSchema = new mongoose.Schema({
     default: 0,
     required: true,
   },
+}, {
+  timestamps: true,
 });
 
 courseSchema.index({ title: 'text' });
@@ -114,48 +123,73 @@ courseSchema.methods.toJSON = function () {
   delete courseObj.coverImage;
   delete courseObj.ratings;
   delete courseObj.__v;
+  delete courseObj.sections;
 
   courseObj.coverImage = `${process.env.HOST}/courses/${course._id.toString()}/cover-image`;
 
   return courseObj;
 };
 
-courseSchema.statics.formatListCoursesWhenSelect = async (courses = []) => {
-  for (let i = 0; i < courses.length; ++i) {
-    let { isNew } = courses[i]._doc;
-    if (typeof courses[i].isNew === 'boolean') {
-      isNew = courses[i].isNew;
-    }
-    else {
-      isNew = (new Date()).valueOf() - 7776000000 <= (new Date(courses[i].createdAt)).valueOf();
-    }
+courseSchema.methods.packCourseContent = async function (boughtCourses = [], isAdminOrOwner = false) {
+  const course = this.toJSON();
+  try {
+    const foundCategoryName = (await Category.findById(course.category)).name;
+    course.categoryName = foundCategoryName;
+  }
+  catch {
+    course.categoryName = '';
+  }
 
-    try {
-      const foundCategoryName = (await Category.findById(courses[i].category)).name;
-      courses[i] = {
-        ...courses[i]._doc,
-        coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
-        categoryName: foundCategoryName,
-        totalRating: courses[i]._doc.ratings.length,
-        isNew,
-      };
-    }
-    catch (error) {
-      courses[i] = {
-        ...courses[i]._doc,
-        coverImage: `${process.env.HOST}/courses/${courses[i]._id.toString()}/cover-image`,
-        categoryName: '',
-        isNew,
-      };
+  const user = await User.findById(course.tutor);
+  delete course.tutor;
+  course.tutor = {
+    fullname: user.fullname,
+    email: user.email,
+  };
+
+  const last90DaysTimestamp = (new Date()).valueOf() - 7776000000;
+
+  let isNew = false;
+  if (last90DaysTimestamp <= (new Date(course.createdAt).valueOf())) {
+    isNew = true;
+  }
+  course.isNew = isNew;
+
+  course.isBought = false;
+  if (isAdminOrOwner) {
+    course.isBought = true;
+  }
+  else if (Array.isArray(boughtCourses) && boughtCourses.length !== 0) {
+    for (let i = 0; i < boughtCourses.length; ++i) {
+      if (boughtCourses[i].courseId === course._id.toString()) {
+        course.isBought = true;
+        break;
+      }
     }
   }
+
+  course.isHot = false;
+  if (course.totalRegisteredLastWeek > 10) {
+    course.isHot = true;
+  }
+
+  return course;
 };
 
-courseSchema.statics.getListCourses = async (isPublic = true, page = 1, title = '', categoryName = '') => {
+courseSchema.statics.getListCourses = async (
+  isPublic = true,
+  page = 1,
+  title = '',
+  categoryName = '',
+  boughtCourses = [],
+  isAdminOrOwner = false,
+  customFields = '',
+  customQueries = {},
+) => {
   const coursesPerPage = 12;
   const skip = coursesPerPage * (page - 1);
 
-  const selectedFields = '_id title summary tutor price sale category isFinish totalRegistered';
+  const selectedFields = `_id title summary tutor price sale category totalRatings createdAt ${customFields}`;
 
   const query = {};
   if (isPublic) {
@@ -181,12 +215,14 @@ courseSchema.statics.getListCourses = async (isPublic = true, page = 1, title = 
     }
     catch (error) {
       const log = new Log({
-        location: 'course.model.js - line 134',
+        location: 'course.model.js',
         message: error.message,
       });
       await log.save();
     }
   }
+
+  Object.assign(query, customQueries);
 
   const totalCourses = await Course.find(query).countDocuments();
   const courses = await Course.find(query)
@@ -194,7 +230,9 @@ courseSchema.statics.getListCourses = async (isPublic = true, page = 1, title = 
   .skip(skip)
   .limit(coursesPerPage);
 
-  await Course.formatListCoursesWhenSelect(courses);
+  for (let i = 0; i < courses.length; ++i) {
+    courses[i] = await courses[i].packCourseContent(boughtCourses, isAdminOrOwner);
+  }
 
   return {
     courses,
@@ -212,6 +250,7 @@ courseSchema.statics.increaseTotalViewed = async (courseId = '') => {
 
     ++course.totalViewed;
     await course.save();
+    return course;
   }
   catch { /** ignored */ }
 };

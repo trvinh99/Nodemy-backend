@@ -54,6 +54,7 @@ ratingRoute.post('/ratings', authentication, requestValidation(createRatingReque
     course.ratings.push({ rating: rating._id.toString() });
     averageRatings /= course.ratings.length;
     course.averageRatings = averageRatings;
+    ++course.totalRatings;
     await course.save();
 
     res.status(201).send({
@@ -147,6 +148,7 @@ ratingRoute.delete('/ratings/:courseId', authentication, requestValidation(delet
     course.ratings = course.ratings.filter((ratingId) => ratingId !== rating._id.toString());
     averageRatings /= course.ratings.length;
     course.averageRatings = averageRatings;
+    --course.totalRatings;
     await course.save();
 
     await rating.delete();
