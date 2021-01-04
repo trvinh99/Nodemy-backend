@@ -169,7 +169,7 @@ categoryRoute.patch("/categories/:id", authentication, requestValidation(updateC
 
 categoryRoute.get('/categories/most-registered', async (_, res) => {
   try {
-    const categories = await Category.find().sort({ totalRegisteredLastWeek: 'desc' }).limit(6);
+    const categories = await Category.find().sort({ totalRegisteredLastWeek: 'desc' }).limit(5);
     res.send({
       categories,
     });

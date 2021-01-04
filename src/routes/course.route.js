@@ -209,11 +209,16 @@ courseRoute.get('/courses/new', bypassAuthentication, async (req, res) => {
 
 courseRoute.get('/courses/hot', async (req, res) => {
   try {
-    let courses = await Course.find().sort({ sale: 'desc' }).limit(5);
+    let courses = await Course
+    .find()
+    .sort({ sale: 'desc' })
+    .select('_id title summary tutor price sale category totalRatings createdAt')
+    .limit(5);
+    
     for (let i = 0; i < courses.length; ++i) {
       courses[i] = await courses[i].packCourseContent(req.user ? req.user.boughtCourses : [], false);
     }
-    courses = courses.filter((course) => course.hot);
+    courses = courses.filter((course) => course.isHot);
 
     res.send({
       courses,
