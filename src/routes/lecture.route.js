@@ -1,7 +1,9 @@
 const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
+const jwt = require('jsonwebtoken')
 
+const User = require('../models/user.model');
 const Course = require('../models/course.model');
 const CourseSection = require('../models/courseSection.model');
 const CourseLecture = require('../models/courseLecture.model');
@@ -189,8 +191,32 @@ lectureRoute.get('/lectures/:sectionId', authentication, async (req, res) => {
   }
 });
 
-lectureRoute.get('/lectures/:id/video', authentication, async (req, res) => {
+lectureRoute.get('/lectures/:id/video', async (req, res) => {
   try {
+    let { token } = req.query;
+    if (!token || typeof token !== "string") {
+      return res.status(403).send({
+        error: "Please authenticate!",
+      });
+    }
+
+    token = token.replace("Bearer ", "");
+
+    let user;
+    try {
+      const decode = jwt.verify(token, process.env.JWT_SECRET);
+      user = await User.findById(decode._id);
+
+      if (!user) {
+        throw new Error();
+      }
+    }
+    catch {
+      return res.status(403).send({
+        error: "Please authenticate!",
+      });
+    }
+
     const lecture = await CourseLecture.findById(req.params.id);
     if (!lecture) {
       return res.status(404).send({
@@ -199,8 +225,8 @@ lectureRoute.get('/lectures/:id/video', authentication, async (req, res) => {
     }
 
     let hasBought = -1;
-    for (let i = 0; i < req.user.boughtCourses.legnth; ++i) {
-      if (req.user.boughtCourses[i].courseId === lecture.courseId) {
+    for (let i = 0; i < user.boughtCourses.legnth; ++i) {
+      if (user.boughtCourses[i].courseId === lecture.courseId) {
         hasBought = i;
         break;
       }

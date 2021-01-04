@@ -35,6 +35,7 @@ const updateError = require('../responses/user/update.response');
 const registerError = require('../responses/user/register.response');
 
 const downloader = require('../utils/downloader');
+const getUsersRequest = require('../requests/user/getUsers.request');
 
 const userRoute = express.Router();
 
@@ -553,6 +554,39 @@ userRoute.patch('/users/become-teacher', authentication, rolesValidation(['Admin
   catch (error) {
     res.status(500).send({
       error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.get('/users', authentication, rolesValidation(['Admin']), requestValidation(getUsersRequest), async (req, res) => {
+  try {
+    const usersPerPage = 24;
+    const page = parseInt(req.query.page) || 1;
+    const skip = usersPerPage * (page - 1)
+
+    const email = req.query.email || '';
+    const query = {
+      email: {
+        $regex: new RegExp(`${email}`, 'i'),
+      },
+    };
+
+    const totalUsers = await User.find(query).countDocuments();
+
+    const users = await User.find(query)
+    .select('_id email fullname createdAt updatedAt accountType accountHost')
+    .skip(skip)
+    .limit(usersPerPage);
+
+    res.send({
+      users,
+      totalUsers,
+      totalPages: Math.ceil(totalUsers / usersPerPage),
+    })
+  }
+  catch (error) {
+    res.status(400).send({
+      error: error.message,
     });
   }
 });
