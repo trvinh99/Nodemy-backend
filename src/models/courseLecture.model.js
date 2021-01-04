@@ -25,10 +25,6 @@ const courseLectureSchema = new mongoose.Schema({
     minlength: 1,
     maxlength: 100,
   },
-  video: {
-    type: Buffer,
-    required: true,
-  },
   canPreview: {
     type: Boolean,
     required: true,
@@ -42,7 +38,6 @@ courseLectureSchema.methods.toJSON = function () {
   const courseLecture = this;
   const courseLectureObject = courseLecture.toObject();
 
-  delete courseLectureObject.video;
   delete courseLectureObject.createdAt;
   delete courseLectureObject.updatedAt;
   delete courseLectureObject.__v;

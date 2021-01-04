@@ -18,6 +18,7 @@ services:
       - HOST=$HOST
       - PHASE=$PHASE
     volumes:
+      - /home/videos:/home/videos
       - /etc/letsencrypt:/etc/letsencrypt
       - /var/lib/letsencrypt:/var/lib/letsencrypt
     ports:

@@ -414,7 +414,8 @@ userRoute.get('/users/wishlist', authentication, async (req, res) => {
 
     for (let i = 0; i < req.user.wishlist.length; ++i) {
       try {
-        const course = await Course.getBasicInfoOfSingleCourse(req.user.wishlist[i].courseId);
+        let course = await Course.findById(req.user.wishlist[i].courseId).select('_id title summary tutor price sale category totalRatings createdAt');
+        course = await course.packCourseContent(req.user.boughtCourses, false);
         courses.push(course);
       }
       catch { /** ignored */ }
@@ -437,7 +438,8 @@ userRoute.get('/users/bought', authentication, async (req, res) => {
 
     for (let i = 0; i < req.user.boughtCourses.length; ++i) {
       try {
-        const course = await Course.getBasicInfoOfSingleCourse(req.user.boughtCourses[i].courseId);
+        let course = await Course.findById(req.user.boughtCourses[i].courseId).select('_id title summary tutor price sale category totalRatings createdAt');
+        course = await course.packCourseContent([{ courseId: course._id.toString() }], false);
         courses.push(course);
       }
       catch { /** ignored */ }

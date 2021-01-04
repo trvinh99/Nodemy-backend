@@ -1,13 +1,10 @@
 const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
-const jwt = require("jsonwebtoken");
-const { Readable } = require('stream');
 
 const Course = require('../models/course.model');
 const CourseSection = require('../models/courseSection.model');
 const CourseLecture = require('../models/courseLecture.model');
-const User = require('../models/user.model');
 
 const authentication = require('../middlewares/authentication.middleware');
 const rolesValidation = require('../middlewares/rolesValidation.middleware');
@@ -67,12 +64,18 @@ lectureRoute.post('/lectures', authentication, rolesValidation(['Admin', 'Teache
       sectionId: req.body.sectionId,
       lectureName: req.body.lectureName,
       canPreview: req.body.canPreview === 'Yes',
-      video: req.files.video[0].buffer,
     });
     await lecture.save();
 
     section.lectures.push({ lecture: lecture._id.toString() });
     await section.save();
+
+    if (process.env.PHASE === 'DEVELOPMENT') {
+      fs.writeFileSync(`${__dirname}/videos/${lecture._id.toString()}.mp4`, req.files.video[0].buffer);
+    }
+    else {
+      fs.writeFileSync(`/home/videos/${lecture._id.toString()}.mp4`, req.files.video[0].buffer);
+    }
 
     res.status(201).send({
       lecture,
@@ -140,8 +143,12 @@ lectureRoute.patch('/lectures/:id/video', authentication, rolesValidation(['Admi
       });
     }
 
-    lecture.video = req.file.buffer;
-    await lecture.save();
+    if (process.env.PHASE === 'DEVELOPMENT') {
+      fs.writeFileSync(`${__dirname}/videos/${lecture._id.toString()}.mp4`, req.file.buffer);
+    }
+    else {
+      fs.writeFileSync(`/home/videos/${lecture._id.toString()}.mp4`, req.file.buffer);
+    }
 
     res.send({
       lecture,
@@ -182,16 +189,8 @@ lectureRoute.get('/lectures/:sectionId', authentication, async (req, res) => {
   }
 });
 
-lectureRoute.get('/lectures/:id/video', async (req, res) => {
+lectureRoute.get('/lectures/:id/video', authentication, async (req, res) => {
   try {
-    const decode = jwt.verify(req.query.token, process.env.JWT_SECRET);
-    const user = await User.findById(decode._id);
-    if (!user) {
-      return res.status(403).send({
-        error: "Please authenticate!",
-      });
-    }
-
     const lecture = await CourseLecture.findById(req.params.id);
     if (!lecture) {
       return res.status(404).send({
@@ -200,24 +199,30 @@ lectureRoute.get('/lectures/:id/video', async (req, res) => {
     }
 
     let hasBought = -1;
-    for (let i = 0; i < user.boughtCourses.legnth; ++i) {
-      if (user.boughtCourses[i].courseId === lecture.courseId) {
+    for (let i = 0; i < req.user.boughtCourses.legnth; ++i) {
+      if (req.user.boughtCourses[i].courseId === lecture.courseId) {
         hasBought = i;
         break;
       }
     }
 
     if (hasBought !== -1 || lecture.canPreview) {
-      const fileSize = lecture.video.toString().length;
+      let videoPath = '';
+      if (process.env.PHASE === 'DEVELOPMENT') {
+        videoPath = `${__dirname}/videos/${lecture._id.toString()}.mp4`;
+      }
+      else {
+        videoPath = `/home/videos/${lecture._id.toString()}.mp4`;
+      }
+      const videoStat = fs.statSync(videoPath);
+      const fileSize = videoStat.size;
 
       if (req.headers.range) {
         const parts = req.headers.range.replace(/bytes=/, "").split("-")
         const start = parseInt(parts[0], 10)
         const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
         const chunksize = (end - start) + 1;
-        const stream = new Readable();
-        stream.push(lecture.video);
-        stream.push(null);
+        const file = fs.createReadStream(videoPath, { start, end });
         const head = {
           'Content-Range': `bytes ${start}-${end}/${fileSize}`,
           'Accept-Ranges': 'bytes',
@@ -225,7 +230,7 @@ lectureRoute.get('/lectures/:id/video', async (req, res) => {
           'Content-Type': 'video/mp4',
         }
         res.writeHead(206, head);
-        stream.pipe(res);
+        file.pipe(res);
       }
       else {
         const head = {
@@ -233,10 +238,7 @@ lectureRoute.get('/lectures/:id/video', async (req, res) => {
           'Content-Type': 'video/mp4',
         };
         res.writeHead(200, head);
-        const stream = new Readable();
-        stream.push(lecture.video);
-        stream.push(null);
-        stream.pipe(res);
+        fs.createReadStream(videoPath).pipe(res);
       }
     }
     else {
@@ -273,6 +275,13 @@ lectureRoute.delete('/lectures/:id', authentication, rolesValidation(['Admin', '
 
     await lecture.delete();
     await section.save();
+
+    if (process.env.PHASE === 'DEVELOPMENT') {
+      fs.unlinkSync(`${__dirname}/videos/${lecture._id.toString()}.mp4`);
+    }
+    else {
+      fs.unlinkSync(`/home/videos/${lecture._id.toString()}.mp4`);
+    }
     
     res.send({
       lecture,
