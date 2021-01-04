@@ -46,6 +46,7 @@ const courseSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0,
+    max: 100,
     require: true,
   },
   category: {
@@ -97,12 +98,6 @@ const courseSchema = new mongoose.Schema({
     min: 0,
     default: 0,
     required: true,
-  },
-  totalRegisteredLastWeek: {
-    type: Number,
-    required: true,
-    min: 0,
-    default: 0,
   },
   totalViewed: {
     type: Number,
@@ -169,8 +164,13 @@ courseSchema.methods.packCourseContent = async function (boughtCourses = [], isA
   }
 
   course.isHot = false;
-  if (course.totalRegisteredLastWeek > 10) {
+  if (course.sale >= 80) {
     course.isHot = true;
+  }
+
+  course.isBestseller = false;
+  if (course.totalRegistered > 2) {
+    course.isBestseller = true;
   }
 
   return course;

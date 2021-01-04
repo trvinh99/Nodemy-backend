@@ -5,7 +5,6 @@ const Course = require('../models/course.model');
 const Category = require('../models/category.model');
 const CourseSection = require('../models/courseSection.model');
 const CourseLecture = require('../models/courseLecture.model');
-const HotCourse = require('../models/hotCourse.model');
 
 const authentication = require('../middlewares/authentication.middleware');
 const requestValidation = require('../middlewares/requestValidation.middleware');
@@ -210,14 +209,11 @@ courseRoute.get('/courses/new', bypassAuthentication, async (req, res) => {
 
 courseRoute.get('/courses/hot', async (req, res) => {
   try {
-    const courses = await HotCourse.find().sort({ totalRegisteredLastWeek: 'desc' }).limit(5);
-    for (let i = 0; i < courses.length; ++i) {
-      courses[i] = await Course.findById(courses[i].courseId);
-    }
-
+    let courses = await Course.find().sort({ sale: 'desc' }).limit(5);
     for (let i = 0; i < courses.length; ++i) {
       courses[i] = await courses[i].packCourseContent(req.user ? req.user.boughtCourses : [], false);
     }
+    courses = courses.filter((course) => course.hot);
 
     res.send({
       courses,
@@ -403,7 +399,6 @@ courseRoute.patch('/courses/:id/buy', authentication, requestValidation(buyCours
     }
 
     ++course.totalRegistered;
-    ++course.totalRegisteredLastWeek;
 
     req.user.boughtCourses.push({
       courseId: course._id.toString(),
@@ -413,15 +408,6 @@ courseRoute.patch('/courses/:id/buy', authentication, requestValidation(buyCours
     await req.user.save();
 
     await Category.updateTotalRegisteredLastWeek(course.category);
-    const foundInHotCourse = await HotCourse.find({ courseId: course._id.toString() });
-    if (!foundInHotCourse) {
-      const hotCourse = new HotCourse({ courseId: course._id.toString(), totalRegisteredLastWeek: course.totalRegisteredLastWeek });
-      await hotCourse.save();
-    }
-    else {
-      foundInHotCourse.totalRegisteredLastWeek = course.totalRegisteredLastWeek;
-      await foundInHotCourse.save();
-    }
 
     req.user.wishlist = req.user.wishlist.filter((_course) => _course.couseId !== course._id.toString());
     await req.user.save();
