@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const Category = require('./category.model');
+const User = require('./user.model');
 const Log = require('./log.model');
 
 const courseSchema = new mongoose.Schema({
@@ -138,6 +139,13 @@ courseSchema.methods.packCourseContent = async function (boughtCourses = [], isA
   catch {
     course.categoryName = '';
   }
+
+  const user = await User.findById(course.tutor);
+  delete course.tutor;
+  course.tutor = {
+    fullname: user.fullname,
+    email: user.email,
+  };
 
   const last90DaysTimestamp = (new Date()).valueOf() - 7776000000;
 
