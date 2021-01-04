@@ -165,7 +165,6 @@ courseRoute.get('/courses/top-viewed', bypassAuthentication, async (req, res) =>
     .select('_id title summary tutor price sale category totalRatings createdAt averageRatings')
     .sort({ totalViewed: 'desc' })
     .limit(10);
-    await Course.formatListCoursesWhenSelect(courses);
 
     for (let i = 0; i < courses.length; ++i) {
       courses[i] = await courses[i].packCourseContent(req.user ? req.user.boughtCourses : [], false);
