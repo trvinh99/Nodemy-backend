@@ -40,6 +40,20 @@ categoryRoute.get("/categories", requestValidation(getListCategoriesRequest), as
   }
 });
 
+categoryRoute.get('/categories/most-registered', async (_, res) => {
+  try {
+    const categories = await Category.find().sort({ totalRegisteredLastWeek: 'desc' }).limit(5);
+    res.send({
+      categories,
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
 categoryRoute.get("/categories/:id", requestValidation(getCategoryRequest), async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
@@ -164,20 +178,6 @@ categoryRoute.patch("/categories/:id", authentication, requestValidation(updateC
   }
   catch (error) {
     updateCategoryError(res, error);
-  }
-});
-
-categoryRoute.get('/categories/most-registered', async (_, res) => {
-  try {
-    const categories = await Category.find().sort({ totalRegisteredLastWeek: 'desc' }).limit(5);
-    res.send({
-      categories,
-    });
-  }
-  catch (error) {
-    res.status(500).send({
-      error: 'Internal Server Error',
-    });
   }
 });
 
