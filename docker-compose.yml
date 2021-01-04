@@ -37,6 +37,8 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=$MONGO_PASSWORD
     volumes:
       - /root/nodemy-db:/home/nodemy-db
+    ports:
+      - "27017:27017"
     networks:
       - app-network
 
