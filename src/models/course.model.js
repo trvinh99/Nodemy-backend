@@ -181,6 +181,7 @@ courseSchema.statics.getListCourses = async (
   page = 1,
   title = '',
   categoryName = '',
+  sort = '',
   boughtCourses = [],
   isAdminOrOwner = false,
   customFields = '',
@@ -225,10 +226,27 @@ courseSchema.statics.getListCourses = async (
   Object.assign(query, customQueries);
 
   const totalCourses = await Course.find(query).countDocuments();
-  const courses = await Course.find(query)
-  .select(selectedFields)
-  .skip(skip)
-  .limit(coursesPerPage);
+  let courses = [];
+  if (!sort) {
+    courses = await Course.find(query)
+    .select(selectedFields)
+    .skip(skip)
+    .limit(coursesPerPage);
+  }
+  else {
+    const sortQuery = {};
+    if (sort.includes('ratings')) {
+      sortQuery.averageRatings = 'desc';
+    }
+    if (sortQuery.includes('price')) {
+      sortQuery.price = 'asc';
+    }
+    courses = await Course.find(query)
+    .select(selectedFields)
+    .sort(sortQuery)
+    .skip(skip)
+    .limit(coursesPerPage);
+  }
 
   for (let i = 0; i < courses.length; ++i) {
     courses[i] = await courses[i].packCourseContent(boughtCourses, isAdminOrOwner);
