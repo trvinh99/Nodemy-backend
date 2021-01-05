@@ -65,6 +65,7 @@ courseRoute.get('/courses', bypassAuthentication, requestValidation(getListCours
       parseInt(req.query.page) || 1,
       req.query.title,
       req.query.category,
+      req.query.sort,
       req.user ? req.user.boughtCourses : [],
       false,
     );
@@ -105,6 +106,7 @@ courseRoute.get('/courses/admin', authentication, rolesValidation(['Admin']), re
       parseInt(req.query.page) || 1,
       req.query.title,
       req.query.category,
+      req.query.sort,
       req.user ? req.user.boughtCourses : [],
       true,
     );
