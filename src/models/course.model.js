@@ -238,7 +238,7 @@ courseSchema.statics.getListCourses = async (
     if (sort.includes('ratings')) {
       sortQuery.averageRatings = 'desc';
     }
-    if (sortQuery.includes('price')) {
+    if (sort.includes('price')) {
       sortQuery.price = 'asc';
     }
     courses = await Course.find(query)
