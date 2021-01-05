@@ -8,7 +8,6 @@ const Log = require('../models/log.model');
 const createCategoryRequest = require("../requests/category/createCategory.request");
 const updateCategoryRequest = require("../requests/category/updateCategory.request");
 
-const getListCategoriesRequest = require("../requests/category/getListCategories.request");
 const getCategoryRequest = require("../requests/category/getCategory.request");
 const rolesValidation = require("../middlewares/rolesValidation.middleware");
 const deleteCategoryRequest = require("../requests/category/deleteCategory.request");
@@ -17,16 +16,9 @@ const createCategoryError = require("../responses/category/createCategory.respon
 
 const categoryRoute = express.Router();
 
-categoryRoute.get("/categories", requestValidation(getListCategoriesRequest), async (req, res) => {
+categoryRoute.get("/categories", async (req, res) => {
   try {
-    const query = {}
-    if (req.query.name.trim()) {
-      query.name = {
-        $regex: new RegExp(`${req.query.name}`, 'i'),
-      };
-    }
-
-    const categories = await Category.find(query);
+    const categories = await Category.find();
     res.send({ categories });
   }
   catch (error) {
