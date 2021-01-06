@@ -437,12 +437,12 @@ courseRoute.patch('/courses/:id/buy', authentication, requestValidation(buyCours
 
 courseRoute.patch('/courses', async (_, res) => {
   try {
-    const course = await Course.find();
-    for (let i = 0; i < course.length; ++i) {
-      course.saleRatio = course.sale;
-      course.sale = course.price - course.price * (course.saleRatio / 100);
+    const courses = await Course.find();
+    for (let i = 0; i < courses.length; ++i) {
+      courses[i].saleRatio = courses[i].sale;
+      courses[i].sale = courses[i].price - courses[i].price * (courses[i].saleRatio / 100);
       try {
-        await course.sale();
+        await courses[i].save();
       }
       catch (err) {
         console.log(err.message);
