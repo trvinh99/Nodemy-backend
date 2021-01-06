@@ -39,6 +39,7 @@ courseRoute.post('/courses', authentication, rolesValidation(['Teacher', 'Admin'
 
     const course = new Course({
       ...req.body,
+      sale: req.body.price - req.body.price * (req.body.saleRatio / 100),
       coverImage,
       tutor: req.user._id.toString(),
     });
@@ -307,6 +308,9 @@ courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher', 'A
         hasChanged = true;
         course[prop] = req.body[prop];
       }
+      if (req.body.hasOwnProperty('saleRatio') || req.body.hasOwnProperty('price')) {
+        course.sale = course.price - course.price * (req.body.saleRatio / 100);
+      }
     });
 
     if (hasChanged) {
@@ -426,6 +430,31 @@ courseRoute.patch('/courses/:id/buy', authentication, requestValidation(buyCours
   }
   catch (error) {
     res.status(500).send({
+      error: error.message,
+    });
+  }
+});
+
+courseRoute.patch('/courses', async (_, res) => {
+  try {
+    const course = await Course.find();
+    for (let i = 0; i < course.length; ++i) {
+      course.saleRatio = course.sale;
+      course.sale = course.price - course.price * (course.saleRatio / 100);
+      try {
+        await course.sale();
+      }
+      catch (err) {
+        console.log(err.message);
+      }
+    }
+
+    res.send({
+      message: 'Succeed',
+    });
+  }
+  catch (error) {
+    res.status(400).send({
       error: error.message,
     });
   }

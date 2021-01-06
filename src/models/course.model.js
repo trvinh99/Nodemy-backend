@@ -44,6 +44,11 @@ const courseSchema = new mongoose.Schema({
   },
   sale: {
     type: Number,
+    required: true,
+    min: 0,
+  },
+  saleRatio: {
+    type: Number,
     default: 0,
     min: 0,
     max: 100,
@@ -239,7 +244,7 @@ courseSchema.statics.getListCourses = async (
       sortQuery.averageRatings = 'desc';
     }
     if (sort.includes('price')) {
-      sortQuery.price = 'asc';
+      sortQuery.sale = 'asc';
     }
     courses = await Course.find(query)
     .select(selectedFields)
