@@ -435,29 +435,4 @@ courseRoute.patch('/courses/:id/buy', authentication, requestValidation(buyCours
   }
 });
 
-courseRoute.patch('/courses', async (_, res) => {
-  try {
-    const courses = await Course.find();
-    for (let i = 0; i < courses.length; ++i) {
-      courses[i].saleRatio = courses[i].sale;
-      courses[i].sale = courses[i].price - courses[i].price * (courses[i].saleRatio / 100);
-      try {
-        await courses[i].save();
-      }
-      catch (err) {
-        console.log(err.message);
-      }
-    }
-
-    res.send({
-      message: 'Succeed',
-    });
-  }
-  catch (error) {
-    res.status(400).send({
-      error: error.message,
-    });
-  }
-});
-
 module.exports = courseRoute;
