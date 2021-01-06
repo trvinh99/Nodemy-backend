@@ -10,11 +10,11 @@ const createCourseRequest = ({ body }) => {
     description,
     coverImage,
     price,
-    sale,
+    saleRatio,
     category,
     isFinish,
     isPublic,
-  } = objectConstraints(body, "Create course's body", ['title', 'summary', 'description', 'coverImage', 'price', 'sale', 'category', 'isFinish', 'isPublic']);
+  } = objectConstraints(body, "Create course's body", ['title', 'summary', 'description', 'coverImage', 'price', 'saleRatio', 'category', 'isFinish', 'isPublic']);
 
   stringConstraints(title, "Course's title", { minLength: 1, maxLength: 60, isRequired: true });
 
@@ -34,7 +34,7 @@ const createCourseRequest = ({ body }) => {
 
   numberConstraints(price, "Course's price", { min: 0 });
 
-  numberConstraints(sale, "Course's sale", { min: 0 });
+  numberConstraints(saleRatio, "Course's sale", { min: 0, max: 100 });
 
   isObjectId(category, "course's category");
 

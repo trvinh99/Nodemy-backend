@@ -10,11 +10,11 @@ const updateCourseRequest = ({ params, body }) => {
     description,
     coverImage,
     price,
-    sale,
+    saleRatio,
     category,
     isFinish,
     isPublic,
-  } = objectConstraints(body, "Update course's body", ['title', 'summary', 'description', 'coverImage', 'price', 'sale', 'category', 'isFinish', 'isPublic']);
+  } = objectConstraints(body, "Update course's body", ['title', 'summary', 'description', 'coverImage', 'price', 'saleRatio', 'category', 'isFinish', 'isPublic']);
 
   const { id } = objectConstraints(params, "Update course's params", ['id']);
   isObjectId(id, "course's id");
@@ -48,7 +48,7 @@ const updateCourseRequest = ({ params, body }) => {
   }
 
   if (typeof sale !== "undefined") {
-    numberConstraints(sale, "Course's sale", { min: 0 });
+    numberConstraints(saleRatio, "Course's sale", { min: 0, max: 100 });
   }
 
   if (typeof category !== "undefined") {
