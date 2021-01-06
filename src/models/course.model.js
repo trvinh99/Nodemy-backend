@@ -143,6 +143,7 @@ courseSchema.methods.packCourseContent = async function (boughtCourses = [], isA
   const user = await User.findById(course.tutor);
   delete course.tutor;
   course.tutor = {
+    _id: user._id.toString(),
     fullname: user.fullname,
     email: user.email,
   };
