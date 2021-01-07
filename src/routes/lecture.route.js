@@ -193,35 +193,37 @@ lectureRoute.get('/lectures/:sectionId', async (req, res) => {
 
 lectureRoute.get('/lectures/:id/video', async (req, res) => {
   try {
-    let { token } = req.query;
-    if (!token || typeof token !== "string") {
-      return res.status(403).send({
-        error: "Please authenticate!",
-      });
-    }
-
-    token = token.replace("Bearer ", "");
-
-    let user;
-    try {
-      const decode = jwt.verify(token, process.env.JWT_SECRET);
-      user = await User.findById(decode._id);
-
-      if (!user) {
-        throw new Error();
-      }
-    }
-    catch {
-      return res.status(403).send({
-        error: "Please authenticate!",
-      });
-    }
-
     const lecture = await CourseLecture.findById(req.params.id);
     if (!lecture) {
       return res.status(404).send({
         error: 'Found no lecture!',
       });
+    }
+
+    let user;
+    if (!lecture.canPreview) {
+      let { token } = req.query;
+      if (!token || typeof token !== "string") {
+        return res.status(403).send({
+          error: "Please authenticate!",
+        });
+      }
+
+      token = token.replace("Bearer ", "");
+
+      try {
+        const decode = jwt.verify(token, process.env.JWT_SECRET);
+        user = await User.findById(decode._id);
+
+        if (!user) {
+          throw new Error();
+        }
+      }
+      catch {
+        return res.status(403).send({
+          error: "Please authenticate!",
+        });
+      }
     }
 
     let hasBought = -1;
