@@ -163,7 +163,7 @@ lectureRoute.patch('/lectures/:id/video', authentication, rolesValidation(['Admi
   }
 });
 
-lectureRoute.get('/lectures/:sectionId', authentication, async (req, res) => {
+lectureRoute.get('/lectures/:sectionId', async (req, res) => {
   try {
     const section = await CourseSection.findById(req.params.sectionId);
     if (!section) {
