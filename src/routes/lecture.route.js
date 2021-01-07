@@ -172,13 +172,7 @@ lectureRoute.get('/lectures/:sectionId', async (req, res) => {
       });
     }
 
-    const lectures = [];
-    for (let i = 0; i < section.lectures.length; ++i) {
-      const lecture = await CourseLecture.findById(section.lectures[i].lecture);
-      if (lecture) {
-        lectures.push(lecture);
-      }
-    }
+    const lectures = await CourseLecture.find({ sectionId: req.params.sectionId });
 
     res.send({
       lectures,
