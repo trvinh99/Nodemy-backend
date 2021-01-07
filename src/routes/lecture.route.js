@@ -201,6 +201,7 @@ lectureRoute.get('/lectures/:id/video', async (req, res) => {
     }
 
     let user;
+    let hasBought = -1;
     if (!lecture.canPreview) {
       let { token } = req.query;
       if (!token || typeof token !== "string") {
@@ -224,13 +225,12 @@ lectureRoute.get('/lectures/:id/video', async (req, res) => {
           error: "Please authenticate!",
         });
       }
-    }
 
-    let hasBought = -1;
-    for (let i = 0; i < user.boughtCourses.legnth; ++i) {
-      if (user.boughtCourses[i].courseId === lecture.courseId) {
-        hasBought = i;
-        break;
+      for (let i = 0; i < user.boughtCourses.legnth; ++i) {
+        if (user.boughtCourses[i].courseId === lecture.courseId) {
+          hasBought = i;
+          break;
+        }
       }
     }
 
