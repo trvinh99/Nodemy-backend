@@ -58,6 +58,9 @@ sectionRoute.post('/sections', authentication, rolesValidation(['Teacher', 'Admi
     const section = new Section(req.body);
 
     await section.save();
+    course.sections.push({ section: section._id.toString() });
+    await course.save();
+
     res.status(201).send({ section })
   } 
   catch (error) {
@@ -65,7 +68,31 @@ sectionRoute.post('/sections', authentication, rolesValidation(['Teacher', 'Admi
       error: 'Internal Server Error',
     });
   }
-})
+});
+
+sectionRoute.get('/sections', async (req, res) => {
+  try {
+    const sections = await Section.find();
+    for (let i = 0; i < sections.length; ++i) {
+      try {
+        const course = await Course.findById(sections[i].courseId);
+        course.sections.push({ section: sections[i]._id.toString() });
+        await course.save();
+      }
+      catch (error) {
+        console.log(error.message);
+      }
+    }
+    res.send({
+      message: 'succeed',
+    });
+  }
+  catch (error) {
+    res.status(400).send({
+      error: error.message,
+    });
+  }
+});
 
 sectionRoute.delete('/sections/:id', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(deleteSectionRequest), async (req, res) => {
   try {
