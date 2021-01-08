@@ -190,9 +190,11 @@ courseRoute.get('/courses/new', bypassAuthentication, async (req, res) => {
     .sort({ createdAt: 'desc' })
     .limit(10);
 
+    console.log(req.user.accountType);
     for (let i = 0; i < courses.length; ++i) {
       courses[i] = await courses[i].packCourseContent(req.user);
     }
+    console.log(courses[0]);
 
     courses = courses.filter((course) => course.isNew);
 
