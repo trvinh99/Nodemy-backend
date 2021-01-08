@@ -254,7 +254,7 @@ courseRoute.get('/courses/:id', bypassAuthentication, requestValidation(getCours
     console.log('Here');
 
     res.send({
-      course: await course.packCourseContent(req.user ? req.user.boughtCourses : [], isAdminOrOwner),
+      course: await course.packCourseContent(typeof req.user === 'object' ? req.user.boughtCourses : [], isAdminOrOwner),
     });
   }
   catch (error) {
