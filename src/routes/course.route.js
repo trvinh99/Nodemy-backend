@@ -49,7 +49,7 @@ courseRoute.post('/courses', authentication, rolesValidation(['Teacher', 'Admin'
     await category.save();
 
     res.status(201).send({
-      course: await course.packCourseContent([], true),
+      course: await course.packCourseContent(req.user),
     });
   }
   catch (error) {
@@ -67,8 +67,7 @@ courseRoute.get('/courses', bypassAuthentication, requestValidation(getListCours
       req.query.title,
       req.query.category,
       req.query.sort,
-      req.user ? req.user.boughtCourses : [],
-      false,
+      req.user,
     );
     res.send(listCourses);
   }
@@ -87,7 +86,7 @@ courseRoute.get('/courses/me', authentication, rolesValidation(['Teacher', 'Admi
     .select('_id title summary tutor price sale category totalRatings createdAt averageRatings');
 
     for (let i = 0; i < courses.length; ++i) {
-      courses[i] = await courses[i].packCourseContent([], true);
+      courses[i] = await courses[i].packCourseContent(req.user);
     }
     res.send({
       courses,
@@ -108,8 +107,7 @@ courseRoute.get('/courses/admin', authentication, rolesValidation(['Admin']), re
       req.query.title,
       req.query.category,
       req.query.sort,
-      req.user ? req.user.boughtCourses : [],
-      true,
+      req.user,
     );
     res.send(listCourses);
   }
@@ -131,7 +129,7 @@ courseRoute.get('/courses/me/:id', authentication, rolesValidation(['Teacher', '
     }
 
     res.send({
-      course: await course.packCourseContent([], true),
+      course: await course.packCourseContent(req.user),
     });
   }
   catch {
@@ -151,7 +149,7 @@ courseRoute.get('/courses/admin/:id', authentication, rolesValidation(['Admin'])
     }
 
     res.send({
-      course: await course.packCourseContent([], true),
+      course: await course.packCourseContent(req.user),
     });
   }
   catch {
@@ -170,7 +168,7 @@ courseRoute.get('/courses/top-viewed', bypassAuthentication, async (req, res) =>
     .limit(10);
 
     for (let i = 0; i < courses.length; ++i) {
-      courses[i] = await courses[i].packCourseContent(req.user ? req.user.boughtCourses : [], false);
+      courses[i] = await courses[i].packCourseContent(req.user);
     }
 
     res.send({
@@ -193,7 +191,7 @@ courseRoute.get('/courses/new', bypassAuthentication, async (req, res) => {
     .limit(10);
 
     for (let i = 0; i < courses.length; ++i) {
-      courses[i] = await courses[i].packCourseContent(req.user ? req.user.boughtCourses : [], false);
+      courses[i] = await courses[i].packCourseContent(req.user);
     }
 
     courses = courses.filter((course) => course.isNew);
@@ -218,7 +216,7 @@ courseRoute.get('/courses/hot', async (req, res) => {
     .limit(5);
 
     for (let i = 0; i < courses.length; ++i) {
-      courses[i] = await courses[i].packCourseContent(req.user ? req.user.boughtCourses : [], false);
+      courses[i] = await courses[i].packCourseContent(req.user);
     }
     courses = courses.filter((course) => course.isHot);
 
@@ -244,16 +242,8 @@ courseRoute.get('/courses/:id', bypassAuthentication, requestValidation(getCours
 
     course = await Course.increaseTotalViewed(course._id.toString());
 
-    let isAdminOrOwner = false;
-    if (req.user && req.user.accountType === 'Admin') {
-      isAdminOrOwner = true;
-    }
-    else if (req.user && req.user._id.toString() === course.tutor) {
-      isAdminOrOwner = true;
-    }
-
     res.send({
-      course: await course.packCourseContent(req.user ? req.user.boughtCourses : [], isAdminOrOwner),
+      course: await course.packCourseContent(req.user),
     });
   }
   catch (error) {
@@ -326,7 +316,7 @@ courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher', 'A
     }
 
     res.send({
-      course: await course.packCourseContent([], true),
+      course: await course.packCourseContent(req.user),
     });
   }
   catch (error) {
@@ -383,7 +373,7 @@ courseRoute.delete('/courses/:id', authentication, rolesValidation(['Teacher', '
     await category.save();
 
     res.send({
-      course: await course.packCourseContent([], true),
+      course: await course.packCourseContent(req.user),
     });
   }
   catch (error) {
