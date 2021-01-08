@@ -130,7 +130,7 @@ courseSchema.methods.toJSON = function () {
   return courseObj;
 };
 
-courseSchema.methods.packCourseContent = async function (boughtCourses = [], isAdminOrOwner = false) {
+courseSchema.methods.packCourseContent = async function (user) {
   const course = this.toJSON();
   try {
     const foundCategoryName = (await Category.findById(course.category)).name;
@@ -140,12 +140,12 @@ courseSchema.methods.packCourseContent = async function (boughtCourses = [], isA
     course.categoryName = '';
   }
 
-  const user = await User.findById(course.tutor);
+  const tutorInfo = await User.findById(course.tutor);
   delete course.tutor;
   course.tutor = {
-    _id: user._id.toString(),
-    fullname: user.fullname,
-    email: user.email,
+    _id: tutorInfo._id.toString(),
+    fullname: tutorInfo.fullname,
+    email: tutorInfo.email,
   };
 
   const last90DaysTimestamp = (new Date()).valueOf() - 7776000000;
@@ -157,12 +157,21 @@ courseSchema.methods.packCourseContent = async function (boughtCourses = [], isA
   course.isNew = isNew;
 
   course.isBought = false;
+
+  let isAdminOrOwner = false;
+  if (user && user.accountType === 'Admin') {
+    isAdminOrOwner = true;
+  }
+  else if (user && user._id.toString() === course.tutor) {
+    isAdminOrOwner = true;
+  }
+
   if (isAdminOrOwner) {
     course.isBought = true;
   }
-  else if (Array.isArray(boughtCourses) && boughtCourses.length !== 0) {
-    for (let i = 0; i < boughtCourses.length; ++i) {
-      if (boughtCourses[i].courseId === course._id.toString()) {
+  else if (user && Array.isArray(user.boughtCourses) && user.boughtCourses.length !== 0) {
+    for (let i = 0; i < user.boughtCourses.length; ++i) {
+      if (user.boughtCourses[i].courseId === course._id.toString()) {
         course.isBought = true;
         break;
       }
@@ -188,8 +197,7 @@ courseSchema.statics.getListCourses = async (
   title = '',
   categoryName = '',
   sort = '',
-  boughtCourses = [],
-  isAdminOrOwner = false,
+  user,
   customFields = '',
   customQueries = {},
 ) => {
@@ -255,7 +263,7 @@ courseSchema.statics.getListCourses = async (
   }
 
   for (let i = 0; i < courses.length; ++i) {
-    courses[i] = await courses[i].packCourseContent(boughtCourses, isAdminOrOwner);
+    courses[i] = await courses[i].packCourseContent(user);
   }
 
   return {
