@@ -251,6 +251,7 @@ courseRoute.get('/courses/:id', bypassAuthentication, requestValidation(getCours
     else if (typeof req.user === 'object' && req.user._id.toString() === course.tutor) {
       isAdminOrOwner = true;
     }
+    console.log('Here');
 
     res.send({
       course: await course.packCourseContent(req.user ? req.user.boughtCourses : [], isAdminOrOwner),
