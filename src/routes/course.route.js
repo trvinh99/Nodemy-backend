@@ -207,7 +207,7 @@ courseRoute.get('/courses/new', bypassAuthentication, async (req, res) => {
   }
 });
 
-courseRoute.get('/courses/hot', async (req, res) => {
+courseRoute.get('/courses/hot', bypassAuthentication, async (req, res) => {
   try {
     let courses = await Course
     .find()
