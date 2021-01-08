@@ -334,7 +334,6 @@ userRoute.patch('/users/learning-process', authentication, requestValidation(upd
     }
 
     req.user.boughtCourses[foundIndex].currentWatchingLecture = req.body.currentWatchingLecture;
-    req.user.boughtCourses[foundIndex].currentWatchingTimepoint = req.body.currentWatchingTimepoint;
     await req.user.save();
 
     res.send({

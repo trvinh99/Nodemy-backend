@@ -419,9 +419,6 @@ courseRoute.patch('/courses/:id/buy', authentication, requestValidation(buyCours
 
     await Category.updateTotalRegisteredLastWeek(course.category);
 
-    req.user.wishlist = req.user.wishlist.filter((_course) => _course.couseId !== course._id.toString());
-    await req.user.save();
-
     sendPurchasedNotification(req.user.email, req.user.fullname, course.title);
 
     res.send({

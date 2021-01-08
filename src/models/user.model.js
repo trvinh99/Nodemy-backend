@@ -74,10 +74,6 @@ const userSchema = new mongoose.Schema({
       minlength: 24,
       maxlength: 24,
     },
-    currentWatchingTimepoint: {
-      type: Number,
-      min: 0,
-    },
   }],
   isBanned: {
     type: Boolean,
