@@ -245,16 +245,15 @@ courseRoute.get('/courses/:id', bypassAuthentication, requestValidation(getCours
     course = await Course.increaseTotalViewed(course._id.toString());
 
     let isAdminOrOwner = false;
-    if (typeof req.user === 'object' && req.user.accountType === 'Admin') {
+    if (req.user && req.user.accountType === 'Admin') {
       isAdminOrOwner = true;
     }
-    else if (typeof req.user === 'object' && req.user._id.toString() === course.tutor) {
+    else if (req.user && req.user._id.toString() === course.tutor) {
       isAdminOrOwner = true;
     }
-    console.log('Here');
 
     res.send({
-      course: await course.packCourseContent(typeof req.user === 'object' ? req.user.boughtCourses : [], isAdminOrOwner),
+      course: await course.packCourseContent(req.user ? req.user.boughtCourses : [], isAdminOrOwner),
     });
   }
   catch (error) {
