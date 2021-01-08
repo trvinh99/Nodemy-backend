@@ -244,8 +244,16 @@ courseRoute.get('/courses/:id', bypassAuthentication, requestValidation(getCours
 
     course = await Course.increaseTotalViewed(course._id.toString());
 
+    let isAdminOrOwner = false;
+    if (req.user.accountType === 'Admin') {
+      isAdminOrOwner = true;
+    }
+    else if (req.user._id.toString() === course.tutor) {
+      isAdminOrOwner = true;
+    }
+
     res.send({
-      course: await course.packCourseContent(req.user ? req.user.boughtCourses : [], false),
+      course: await course.packCourseContent(req.user ? req.user.boughtCourses : [], isAdminOrOwner),
     });
   }
   catch (error) {
