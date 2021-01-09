@@ -2,8 +2,8 @@ const NodemyResponseError = require("../../utils/NodemyResponseError");
 const { objectConstraints, isObjectId, stringConstraints, numberConstraints } = require("../../utils/validator");
 
 const updateRatingRequest = ({ params, body }) => {
-  const { courseId } = objectConstraints(params, "Update rating's params", ['courseId']);
-  isObjectId(courseId, "course's id");
+  const { id } = objectConstraints(params, "Update rating's params", ['id']);
+  isObjectId(id, "course's id");
 
   const { description, rating } = objectConstraints(body, "Create rating's body", ['description', 'rating']);
 
