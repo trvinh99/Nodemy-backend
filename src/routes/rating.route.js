@@ -98,6 +98,12 @@ ratingRoute.get('/ratings/:courseId/me', authentication, requestValidation(getOw
     }
 
     const rating = await Rating.findOne({ courseId: req.params.courseId, userId: req.user._id.toString() });
+    if (!rating) {
+      return res.status(404).send({
+        error: 'Found no rating!',
+      });
+    }
+
     res.send({
       rating: {
         ...rating,
