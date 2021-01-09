@@ -16,31 +16,33 @@ const ratingRoute = express.Router();
 
 ratingRoute.post('/ratings', authentication, requestValidation(createRatingRequest), async (req, res) => {
   try {
-    let hasBought = false;
-    for (let i = 0; i < req.user.boughtCourses.length; ++i) {
-      if (req.user.boughtCourses[i].courseId === req.body.courseId) {
-        hasBought = true;
-        break;
-      }
+    const course = await Course.findById(req.body.courseId);
+    if (!course) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
     }
 
-    if (!hasBought) {
-      return res.status(400).send({
-        error: 'You have not bought this course yet!',
-      });
+    if (req.user.accountType !== 'Admin' && course.tutor !== req.user._id.toString()) {
+      let hasBought = false;
+      for (let i = 0; i < req.user.boughtCourses.length; ++i) {
+        if (req.user.boughtCourses[i].courseId === req.body.courseId) {
+          hasBought = true;
+          break;
+        }
+      }
+
+      if (!hasBought) {
+        return res.status(400).send({
+          error: 'You have not bought this course yet!',
+        });
+      }
     }
 
     let rating = await Rating.findOne({ courseId: req.body.courseId, userId: req.user._id.toString() });
     if (rating) {
       return res.status(400).send({
         message: 'You can not start another rating for this course!',
-      });
-    }
-
-    const course = await Course.findById(req.body.courseId);
-    if (!course) {
-      return res.status(404).send({
-        error: 'Found no course!',
       });
     }
 
