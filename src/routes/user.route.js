@@ -471,7 +471,7 @@ userRoute.get('/users', authentication, rolesValidation(['Admin']), requestValid
     const totalUsers = await User.find(query).countDocuments();
     const users = await User
     .find(query)
-    .select('_id fullname email isBanned')
+    .select('_id fullname email isBanned accountType')
     .skip(skip)
     .limit(usersPerPage);
 
