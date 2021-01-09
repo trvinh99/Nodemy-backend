@@ -119,12 +119,18 @@ ratingRoute.get('/ratings/:courseId/me', authentication, requestValidation(getOw
   }
 })
 
-ratingRoute.patch('/ratings/:courseId', authentication, requestValidation(updateRatingRequest), async (req, res) => {
+ratingRoute.patch('/ratings/:id', authentication, requestValidation(updateRatingRequest), async (req, res) => {
   try {
-    const rating = await Rating.findOne({ courseId: req.params.courseId, userId: req.user._id.toString() });
+    const rating = await Rating.findById(req.params.id);
     if (!rating) {
       return res.status(404).send({
         error: 'Found no rating!',
+      });
+    }
+
+    if (rating.userId !== req.user._id.toString()) {
+      return res.status(400).send({
+        error: 'You can not edit other rating!',
       });
     }
 
