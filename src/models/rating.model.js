@@ -38,6 +38,15 @@ const ratingSchema = new mongoose.Schema({
   },
 });
 
+ratingSchema.methods.toJSON = function () {
+  const rating = this;
+  const ratingObject = rating.toObject();
+  delete ratingObject.__v;
+  delete ratingObject.createdAt;
+
+  return ratingObject;
+};
+
 ratingSchema.statics.getListRatings = async (page = 1, courseId = '') => {
   const ratingsPerPage = 10;
   const skip = ratingsPerPage * (page - 1);
