@@ -18,17 +18,10 @@ const ratingSchema = new mongoose.Schema({
     minlength: 24,
     maxlength: 24,
   },
-  title: {
-    type: String,
-    trim: true,
-    require: true,
-    minlength: 1,
-    maxlength: 100,
-  },
   description: {
+    default: '',
     type: String,
     trim: true,
-    require: true,
     minlength: 1,
     maxlength: 500,
   },
@@ -58,9 +51,12 @@ ratingSchema.statics.getListRatings = async (page = 1, courseId = '') => {
   .limit(ratingsPerPage);
   
   for (let i = 0; i < ratings.length; ++i) {
+    let user = await User.findById(ratings[i].userId);
+    user = user.toJSON();
     ratings[i] = {
       ...ratings[i],
-      userFullname: await User.findById(ratings[i].userId).select('fullname'),
+      fullname: user.fullname,
+      avatar: user.avatar
     }
   }
 

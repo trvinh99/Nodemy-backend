@@ -10,6 +10,7 @@ const createRatingRequest = require('../requests/rating/createRating.request');
 const getRatingsRequest = require('../requests/rating/getRatings.request');
 const updateRatingRequest = require('../requests/rating/updateRating.request');
 const deleteRatingRequest = require('../requests/rating/deleteRating.request');
+const getOwnRatingRequest = require('../requests/rating/getOwnRating.request');
 
 const ratingRoute = express.Router();
 
@@ -80,6 +81,38 @@ ratingRoute.get('/ratings/:courseId', requestValidation(getRatingsRequest), asyn
   }
 });
 
+ratingRoute.get('/ratings/:courseId/me', authentication, requestValidation(getOwnRatingRequest), async (req, res) => {
+  try {
+    let hasBought = false;
+    for (let i = 0; i < req.user.boughtCourses.length; ++i) {
+      if (req.user.boughtCourses[i].courseId === req.params.courseId) {
+        hasBought = true;
+        break;
+      }
+    }
+
+    if (!hasBought) {
+      return res.status(400).send({
+        error: 'You have not bought this course yet!',
+      });
+    }
+
+    const rating = await Rating.findOne({ courseId: req.params.courseId, userId: req.user._id.toString() });
+    res.send({
+      rating: {
+        ...rating,
+        fullname: req.user.fullname,
+        avatar: req.user.avatar
+      },
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+})
+
 ratingRoute.patch('/ratings/:courseId', authentication, requestValidation(updateRatingRequest), async (req, res) => {
   try {
     const rating = await Rating.findOne({ courseId: req.params.courseId, userId: req.user._id.toString() });
@@ -108,7 +141,7 @@ ratingRoute.patch('/ratings/:courseId', authentication, requestValidation(update
 
       let averageRatings = course.averageRatings * course.ratings.length;
       averageRatings = averageRatings - rating.rating + req.body.rating;
-      course.averageRatings = averageRatings;
+      course.averageRatings = averageRatings / course.ratings.length;
       await course.save();
     }
 

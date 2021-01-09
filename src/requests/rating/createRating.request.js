@@ -2,11 +2,10 @@ const NodemyResponseError = require("../../utils/NodemyResponseError");
 const { objectConstraints, isObjectId, stringConstraints, numberConstraints } = require("../../utils/validator");
 
 const createRatingRequest = ({ body }) => {
-  const { courseId, title, description, rating } = objectConstraints(body, "Create rating's body", ['courseId', 'title', 'description', 'rating']);
+  const { courseId, description, rating } =
+    objectConstraints(body, "Create rating's body", ['courseId', 'description', 'rating']);
   
   isObjectId(courseId, "course's id");
-
-  stringConstraints(title, "Rating's title", { minLength: 1, maxLength: 100, isRequired: true });
 
   stringConstraints(description, "Rating's description", { minLength: 1, maxLength: 500, isRequired: true });
 
