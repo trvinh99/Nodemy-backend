@@ -5,9 +5,7 @@ const updateRatingRequest = ({ params, body }) => {
   const { courseId } = objectConstraints(params, "Update rating's params", ['courseId']);
   isObjectId(courseId, "course's id");
 
-  const { title, description, rating } = objectConstraints(body, "Create rating's body", ['title', 'description', 'rating']);
-
-  stringConstraints(title, "Rating's title", { minLength: 1, maxLength: 100, isRequired: true });
+  const { description, rating } = objectConstraints(body, "Create rating's body", ['description', 'rating']);
 
   stringConstraints(description, "Rating's description", { minLength: 1, maxLength: 500, isRequired: true });
 
