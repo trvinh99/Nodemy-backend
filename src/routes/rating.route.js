@@ -172,16 +172,22 @@ ratingRoute.patch('/ratings/:id', authentication, requestValidation(updateRating
   }
 });
 
-ratingRoute.delete('/ratings/:courseId', authentication, requestValidation(deleteRatingRequest), async (req, res) => {
+ratingRoute.delete('/ratings/:id', authentication, requestValidation(deleteRatingRequest), async (req, res) => {
   try {
-    const rating = await Rating.findOne({ courseId: req.params.courseId, userId: req.user._id.toString() });
+    const rating = await Rating.findById(req.params.id);
     if (!rating) {
       return res.status(404).send({
         error: 'Found no rating!',
       });
     }
 
-    const course = await Course.findById(req.params.courseId);
+    if (rating.userId !== req.user._id.toString()) {
+      return res.status(400).send({
+        error: 'You can not edit other rating!',
+      });
+    }
+
+    const course = await Course.findById(rating.courseId);
     if (!course) {
       return res.status(404).send({
         error: 'Found no course!',
