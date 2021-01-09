@@ -63,7 +63,7 @@ ratingSchema.statics.getListRatings = async (page = 1, courseId = '') => {
     let user = await User.findById(ratings[i].userId);
     user = user.toJSON();
     ratings[i] = {
-      ...ratings[i],
+      ...ratings[i].toJSON(),
       fullname: user.fullname,
       avatar: user.avatar
     }
