@@ -85,18 +85,27 @@ ratingRoute.get('/ratings/:courseId', requestValidation(getRatingsRequest), asyn
 
 ratingRoute.get('/ratings/:courseId/me', authentication, requestValidation(getOwnRatingRequest), async (req, res) => {
   try {
-    let hasBought = false;
-    for (let i = 0; i < req.user.boughtCourses.length; ++i) {
-      if (req.user.boughtCourses[i].courseId === req.params.courseId) {
-        hasBought = true;
-        break;
-      }
+    const course = await Course.findById(req.params.courseId);
+    if (!course) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
     }
 
-    if (!hasBought) {
-      return res.status(400).send({
-        error: 'You have not bought this course yet!',
-      });
+    if (req.user.accountType !== 'Admin' && course.tutor !== req.user._id.toString()) {
+      let hasBought = false;
+      for (let i = 0; i < req.user.boughtCourses.length; ++i) {
+        if (req.user.boughtCourses[i].courseId === req.params.courseId) {
+          hasBought = true;
+          break;
+        }
+      }
+
+      if (!hasBought) {
+        return res.status(400).send({
+          error: 'You have not bought this course yet!',
+        });
+      }
     }
 
     const rating = await Rating.findOne({ courseId: req.params.courseId, userId: req.user._id.toString() });
