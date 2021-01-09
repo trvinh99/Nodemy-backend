@@ -65,7 +65,7 @@ ratingSchema.statics.getListRatings = async (page = 1, courseId = '') => {
     ratings[i] = {
       ...ratings[i].toJSON(),
       fullname: user.fullname,
-      avatar: user.avatar
+      avatar: `${process.env.HOST}/users/${user._id.toString()}/avatar`,
     }
   }
 
