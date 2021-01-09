@@ -117,7 +117,7 @@ ratingRoute.get('/ratings/:courseId/me', authentication, requestValidation(getOw
 
     res.send({
       rating: {
-        ...rating,
+        ...rating.toJSON(),
         fullname: req.user.fullname,
         avatar: req.user.avatar
       },
