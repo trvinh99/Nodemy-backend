@@ -154,7 +154,7 @@ ratingRoute.patch('/ratings/:id', authentication, requestValidation(updateRating
     });
 
     if (req.body.rating) {
-      const course = await Course.findById(req.params.courseId);
+      const course = await Course.findById(rating.courseId);
       if (!course) {
         await rating.delete();
         return res.status(404).send({
