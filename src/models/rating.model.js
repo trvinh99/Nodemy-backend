@@ -36,6 +36,8 @@ const ratingSchema = new mongoose.Schema({
       }
     },
   },
+}, {
+  timestamps: true,
 });
 
 ratingSchema.methods.toJSON = function () {
