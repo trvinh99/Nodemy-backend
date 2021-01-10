@@ -74,7 +74,7 @@ ratingSchema.statics.getListRatings = async (page = 1, courseId = '') => {
   return {
     ratings,
     totalRatings,
-    totalsPage: Math.ceil(totalRatings / ratingsPerPage),
+    totalPages: Math.ceil(totalRatings / ratingsPerPage),
   };
 };
 
