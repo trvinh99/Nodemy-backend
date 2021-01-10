@@ -1,4 +1,3 @@
-const NodemyResponseError = require("../../utils/NodemyResponseError");
 const { objectConstraints, isObjectId } = require("../../utils/validator");
 
 const getCourseRequest = ({ params }) => {

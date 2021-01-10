@@ -430,4 +430,34 @@ courseRoute.patch('/courses/:id/buy', authentication, requestValidation(buyCours
   }
 });
 
+courseRoute.get('/courses/:id/same-category', bypassAuthentication, requestValidation(getCourseRequest), async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course || !course.isPublic) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    const courses = await Course.find({
+      category: course.category,
+    })
+    .sort({ totalRegistered: 'desc' })
+    .limit(5);
+
+    for (let i = 0; i < courses.length; ++i) {
+      courses[i] = await courses[i].packCourseContent(req.user);
+    }
+
+    res.send({
+      courses,
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
 module.exports = courseRoute;
