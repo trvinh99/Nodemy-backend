@@ -119,7 +119,7 @@ ratingRoute.get('/ratings/:courseId/me', authentication, requestValidation(getOw
       rating: {
         ...rating.toJSON(),
         fullname: req.user.fullname,
-        _id: `${process.env.HOST}/users/${req.user._id.toString()}/avatar`,
+        avatar: `${process.env.HOST}/users/${req.user._id.toString()}/avatar`,
       },
     });
   }
