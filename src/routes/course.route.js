@@ -83,7 +83,7 @@ courseRoute.get('/courses/me', authentication, rolesValidation(['Teacher', 'Admi
   try {
     const courses = await Course
     .find({ tutor: req.user._id.toString() })
-    .select('_id title summary tutor price sale category totalRatings createdAt averageRatings');
+    .select('_id title summary tutor price sale category totalRatings createdAt averageRatings updatedAt');
 
     for (let i = 0; i < courses.length; ++i) {
       courses[i] = await courses[i].packCourseContent(req.user);
@@ -163,7 +163,7 @@ courseRoute.get('/courses/top-viewed', bypassAuthentication, async (req, res) =>
   try {
     const courses = await Course
     .find()
-    .select('_id title summary tutor price sale category totalRatings createdAt averageRatings')
+    .select('_id title summary tutor price sale category totalRatings createdAt averageRatings updatedAt')
     .sort({ totalViewed: 'desc' })
     .limit(10);
 
@@ -186,7 +186,7 @@ courseRoute.get('/courses/new', bypassAuthentication, async (req, res) => {
   try {
     let courses = await Course
     .find({ isPublic: true })
-    .select('_id title summary tutor price sale category totalRatings createdAt averageRatings')
+    .select('_id title summary tutor price sale category totalRatings createdAt averageRatings updatedAt')
     .sort({ createdAt: 'desc' })
     .limit(10);
 
@@ -212,7 +212,7 @@ courseRoute.get('/courses/hot', bypassAuthentication, async (req, res) => {
     let courses = await Course
     .find()
     .sort({ sale: 'desc' })
-    .select('_id title summary tutor price sale category totalRatings createdAt averageRatings')
+    .select('_id title summary tutor price sale category totalRatings createdAt averageRatings updatedAt')
     .limit(5);
 
     for (let i = 0; i < courses.length; ++i) {
