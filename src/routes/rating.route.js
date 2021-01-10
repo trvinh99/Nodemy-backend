@@ -145,14 +145,6 @@ ratingRoute.patch('/ratings/:id', authentication, requestValidation(updateRating
       });
     }
 
-    let hasChanged = false;
-    Object.keys(req.body).forEach((prop) => {
-      if (rating[prop] !== req.body[prop]) {
-        rating[prop] = req.body[prop];
-        hasChanged = true;
-      }
-    });
-
     if (req.body.rating) {
       const course = await Course.findById(rating.courseId);
       if (!course) {
@@ -167,6 +159,14 @@ ratingRoute.patch('/ratings/:id', authentication, requestValidation(updateRating
       course.averageRatings = averageRatings / course.ratings.length;
       await course.save();
     }
+
+    let hasChanged = false;
+    Object.keys(req.body).forEach((prop) => {
+      if (rating[prop] !== req.body[prop]) {
+        rating[prop] = req.body[prop];
+        hasChanged = true;
+      }
+    });
 
     if (hasChanged) {
       await rating.save();
