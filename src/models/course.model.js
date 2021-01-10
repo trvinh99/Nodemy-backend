@@ -204,7 +204,7 @@ courseSchema.statics.getListCourses = async (
   const coursesPerPage = 12;
   const skip = coursesPerPage * (page - 1);
 
-  const selectedFields = `_id title summary tutor price sale category totalRatings createdAt averageRatings ${customFields}`;
+  const selectedFields = `_id title summary tutor price sale category totalRatings createdAt averageRatings updatedAt ${customFields}`;
 
   const query = {};
   if (isPublic) {
