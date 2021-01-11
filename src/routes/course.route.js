@@ -334,7 +334,7 @@ courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher', 'A
         course[prop] = req.body[prop];
       }
       if (req.body.hasOwnProperty('saleRatio') || req.body.hasOwnProperty('price')) {
-        course.sale = course.price - course.price * (req.body.saleRatio / 100);
+        course.sale = course.price - course.price * (course.saleRatio / 100);
       }
     });
 
