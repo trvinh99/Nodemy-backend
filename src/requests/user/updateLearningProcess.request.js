@@ -1,11 +1,11 @@
 const { objectConstraints, isObjectId } = require("../../utils/validator");
 
 const updateLearningProcessRequest = ({ body }) => {
-  const { courseId, currentWatchingLecture } =
-    objectConstraints(body, 'Update learning process\'s body', ['courseId', 'currentWatchingLecture']);
+  const { courseId, lectureId } =
+    objectConstraints(body, 'Update learning process\'s body', ['courseId', 'lectureId']);
 
   isObjectId(courseId, "course's id");
-  isObjectId(currentWatchingLecture, "current watching lecture's id");
+  isObjectId(lectureId, "current watching lecture's id");
 };
 
 module.exports = updateLearningProcessRequest;

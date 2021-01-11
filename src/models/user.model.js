@@ -59,7 +59,17 @@ const userSchema = new mongoose.Schema({
     courseId: {
       type: String,
       trim: true,
+      minlength: 24,
+      maxlength: 24,
     },
+  }],
+  cart: [{
+    courseId: {
+      type: String,
+      trim: true,
+      minlength: 24,
+      maxlength: 24,
+    }
   }],
   boughtCourses: [{
     courseId: {
@@ -68,7 +78,7 @@ const userSchema = new mongoose.Schema({
       minlength: 24,
       maxlength: 24
     },
-    currentWatchingLecture: {
+    lectureId: {
       type: String,
       trim: true,
       minlength: 24,
@@ -92,6 +102,10 @@ userSchema.methods.toJSON = function () {
   delete userObject.avatar;
   delete userObject.password;
   delete userObject.resetPasswordToken;
+  delete userObject.cart;
+  delete userObject.boughtCourses;
+  delete userObject.wishlist;
+  delete userObject.isBanned;
   delete userObject.createdAt;
   delete userObject.updatedAt;
   delete userObject.__v;
