@@ -4,7 +4,8 @@ const NodemyResponseError = require("../../utils/NodemyResponseError");
 const { objectConstraints, stringConstraints } = require('../../utils/validator');
 
 const updateNodemyRequest = ({ body }) => {
-  const { email, password, fullname } = objectConstraints(body, "Update account's body", ['email', 'password', 'fullname']);
+  const { email, password, fullname, currentPassword } =
+    objectConstraints(body, "Update account's body", ['email', 'password', 'fullname', 'currentPassword']);
 
   if (typeof email !== 'undefined') {
     stringConstraints(email, 'Email', { maxLength: 100, isRequired: true });
@@ -19,6 +20,10 @@ const updateNodemyRequest = ({ body }) => {
 
     if (password.length < 8) {
       throw new NodemyResponseError(400, 'Password must contain at least 8 characters!');
+    }
+
+    if (typeof currentPassword !== 'string' || currentPassword.length < 8)) {
+      throw new NodemyResponseError(400, 'Old password does not match!');
     }
   }
 

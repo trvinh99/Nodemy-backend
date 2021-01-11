@@ -3,6 +3,7 @@ const axios = require('axios');
 const sharp = require('sharp');
 const multer = require('multer');
 const randToken = require('rand-token');
+const bcrypt = require('bcrypt');
 
 const Log = require('../models/log.model');
 const TempUser = require('../models/tempUser.model');
@@ -25,7 +26,6 @@ const updateNodemyRequest = require('../requests/user/updateNodemy.request');
 const updateGoogleRequest = require('../requests/user/updateGoogle.request');
 const wishlistRequest = require('../requests/user/wishlist.request');
 const updateLearningProcessRequest = require('../requests/user/updateLearningProcess.request');
-const getListUsers = require('../requests/user/getListUsers.request');
 const verifyUserId = require('../requests/user/verifyUserId.request');
 
 const sendWelcome = require('../emails/welcome.email');
@@ -270,8 +270,17 @@ userRoute.patch('/users/update-with-nodemy/', authentication, requestValidation(
   try {
     let hasChanged = false;
 
+    if (req.body.currentPassword && req.body.password) {
+      const isMatch = await bcrypt.compare(req.body.currentPassword, req.user.password);
+      if (!isMatch) {
+        return res.status(400).send({
+          error: 'Old password does not match!',
+        });
+      }
+    }
+
     Object.keys(req.body).forEach((prop) => {
-      if (req.user[prop] !== req.body[prop]) {
+      if (req.user[prop] !== req.body[prop] && prop !== 'currentPassword') {
         hasChanged = true;
         req.user[prop] = req.body[prop];
       }
@@ -310,6 +319,16 @@ userRoute.patch('/users/update-with-google', authentication, requestValidation(u
 
 userRoute.patch('/users/learning-process', authentication, requestValidation(updateLearningProcessRequest), async (req, res) => {
   try {
+    const course = await Course.findById(req.body.courseId);
+    if (!course) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+    if (req.user.accountType === 'Admin' || course.tutor === req.user._id.toString()) {
+      return res.status(204).send();
+    }
+
     let courseId = '';
     let foundIndex = -1;
     for (let i = 0; i < req.user.boughtCourses.length; ++i) {
@@ -321,19 +340,19 @@ userRoute.patch('/users/learning-process', authentication, requestValidation(upd
     }
 
     if (!courseId) {
-      return res.status(404).send({
-        error: 'Found no course!',
+      return res.status(400).send({
+        error: 'You have not bought this course yet!',
       });
     }
 
-    const lecture = await CourseLecture.findById(req.body.currentWatchingLecture);
+    const lecture = await CourseLecture.findById(req.body.lectureId);
     if (!lecture || lecture.courseId !== courseId) {
       return res.status(404).send({
         error: 'Found no lecture!',
       });
     }
 
-    req.user.boughtCourses[foundIndex].currentWatchingLecture = req.body.currentWatchingLecture;
+    req.user.boughtCourses[foundIndex].lectureId = req.body.lectureId;
     await req.user.save();
 
     res.send({
@@ -355,19 +374,9 @@ userRoute.patch('/users/learning-process', authentication, requestValidation(upd
 
 userRoute.patch('/users/add-course-to-wishlist', authentication, requestValidation(wishlistRequest), async (req, res) => {
   try {
-    for (let i = 0; i < req.user.boughtCourses.length; ++i) {
-      if (req.user.boughtCourses[i].courseId === req.body.courseId) {
-        return res.status(400).send({
-          error: 'You can not add an already purchased course to wishlist!',
-        });
-      }
-    }
-
     for (let i = 0; i < req.user.wishlist.length; ++i) {
       if (req.user.wishlist[i].courseId === req.body.courseId) {
-        return res.status(400).send({
-          error: 'You have already added this course to wishlist!',
-        });
+        return res.status(204).send();
       }
     }
 
@@ -432,13 +441,82 @@ userRoute.get('/users/wishlist', authentication, async (req, res) => {
   }
 });
 
+userRoute.patch('/users/add-course-to-cart', authentication, requestValidation(wishlistRequest), async (req, res) => {
+  try {
+    for (let i = 0; i < req.user.cart.length; ++i) {
+      if (req.user.cart[i].courseId === req.body.courseId) {
+        return res.status(204).send();
+      }
+    }
+
+    const course = await Course.findById(req.body.courseId);
+    if (!course) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    req.user.cart = [...req.user.cart, { courseId: req.body.courseId }];
+    await req.user.save();
+
+    res.send({
+      user: req.user
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.patch('/users/remove-course-from-cart', authentication, requestValidation(wishlistRequest), async (req, res) => {
+  try {
+    req.user.cart = req.user.cart.filter((course) => course.courseId !== req.body.courseId);
+    await req.user.save();
+
+    res.send({
+      user: req.user,
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+userRoute.get('/users/cart', authentication, async (req, res) => {
+  try {
+    const courses = [];
+
+    for (let i = 0; i < req.user.cart.length; ++i) {
+      try {
+        let course = await Course.findById(req.user.cart[i].courseId).select('_id title summary tutor price sale category totalRatings createdAt averageRatings');
+        course = await course.packCourseContent(req.user);
+        courses.push(course);
+      }
+      catch { /** ignored */ }
+    }
+
+    res.send({
+      courses,
+    });
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
 userRoute.get('/users/bought', authentication, async (req, res) => {
   try {
     const courses = [];
 
     for (let i = 0; i < req.user.boughtCourses.length; ++i) {
       try {
-        let course = await Course.findById(req.user.boughtCourses[i].courseId).select('_id title summary tutor price sale category totalRatings createdAt averageRatings');
+        let course = await Course.findById(req.user.boughtCourses[i].courseId).select('_id title summary tutor price sale category totalRatings createdAt updatedAt averageRatings');
         course = await course.packCourseContent(req.user);
         courses.push(course);
       }
@@ -448,38 +526,6 @@ userRoute.get('/users/bought', authentication, async (req, res) => {
     res.send({
       courses,
     })
-  }
-  catch (error) {
-    res.status(500).send({
-      error: 'Internal Server Error',
-    });
-  }
-});
-
-userRoute.get('/users', authentication, rolesValidation(['Admin']), requestValidation(getListUsers), async (req, res) => {
-  try {
-    const usersPerPage = 20;
-    const skip = usersPerPage * (req.query.page - 1);
-
-    const query = {};
-    if (req.query.email) {
-      query.email = {
-        $regex: new RegExp(`${req.query.email}`, 'i'),
-      };
-    }
-
-    const totalUsers = await User.find(query).countDocuments();
-    const users = await User
-    .find(query)
-    .select('_id fullname email isBanned accountType')
-    .skip(skip)
-    .limit(usersPerPage);
-
-    res.send({
-      users,
-      totalUsers,
-      totalPages: Math.ceil(totalUsers / usersPerPage),
-    });
   }
   catch (error) {
     res.status(500).send({

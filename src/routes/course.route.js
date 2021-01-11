@@ -121,15 +121,19 @@ courseRoute.get('/courses/admin', authentication, rolesValidation(['Admin']), re
 
 courseRoute.get('/courses/me/:id', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(getCourseRequest), async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    let course = await Course.findById(req.params.id);
     if (!course || course.tutor !== req.user._id.toString()) {
       return res.status(404).send({
         error: 'Found no course!',
       });
     }
 
+    course = await course.packCourseContent(req.user);
+    course.isInWishlist = false;
+    course.isInCart = false
+
     res.send({
-      course: await course.packCourseContent(req.user),
+      course,
     });
   }
   catch {
@@ -141,15 +145,19 @@ courseRoute.get('/courses/me/:id', authentication, rolesValidation(['Teacher', '
 
 courseRoute.get('/courses/admin/:id', authentication, rolesValidation(['Admin']), requestValidation(getCourseRequest), async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    let course = await Course.findById(req.params.id);
     if (!course) {
       return res.status(404).send({
         error: 'Found no course!',
       });
     }
 
+    course = await course.packCourseContent(req.user);
+    course.isInWishlist = false;
+    course.isInCart = false
+
     res.send({
-      course: await course.packCourseContent(req.user),
+      course,
     });
   }
   catch {
@@ -241,9 +249,28 @@ courseRoute.get('/courses/:id', bypassAuthentication, requestValidation(getCours
     }
 
     course = await Course.increaseTotalViewed(course._id.toString());
+    course = await course.packCourseContent(req.user);
+    course.isInWishlist = false;
+    if (req.user) {
+      for (let i = 0; i < req.user.wishlist.length; ++i) {
+        if (req.user.wishlist[i].courseId === course._id.toString()) {
+          course.isInWishlist = true;
+          break;
+        }
+      }
+    }
+    course.isInCart = false;
+    if (req.user) {
+      for (let i = 0; i < req.user.cart.length; ++i) {
+        if (req.user.cart[i].courseId === course._id.toString()) {
+          course.isInCart = true;
+          break;
+        }
+      }
+    }
 
     res.send({
-      course: await course.packCourseContent(req.user),
+      course,
     });
   }
   catch (error) {
@@ -275,7 +302,7 @@ courseRoute.get('/courses/:id/cover-image', requestValidation(getCourseRequest),
 
 courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(updateCourseRequest), async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    let course = await Course.findById(req.params.id);
     if (!course || course.tutor !== req.user._id.toString()) {
       return res.status(404).send({
         error: 'Found no course!',
@@ -315,8 +342,12 @@ courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher', 'A
       await course.save();
     }
 
+    course = await course.packCourseContent(req.user);
+    course.isInWishlist = false;
+    course.isInCart = false;
+
     res.send({
-      course: await course.packCourseContent(req.user),
+      course,
     });
   }
   catch (error) {
@@ -370,10 +401,13 @@ courseRoute.delete('/courses/:id', authentication, rolesValidation(['Teacher', '
     await course.delete();
 
     --category.totalCourses;
+    const cloneCourse = await course.packCourseContent(req.user);
+    cloneCourse.isInWishlist = false;
+    cloneCourse.isInCart = false;
     await category.save();
 
     res.send({
-      course: await course.packCourseContent(req.user),
+      course: cloneCourse,
     });
   }
   catch (error) {
@@ -442,6 +476,7 @@ courseRoute.get('/courses/:id/same-category', bypassAuthentication, requestValid
     const courses = await Course.find({
       category: course.category,
     })
+    .select('_id title summary tutor price sale category totalRatings createdAt averageRatings updatedAt')
     .sort({ totalRegistered: 'desc' })
     .limit(5);
 
