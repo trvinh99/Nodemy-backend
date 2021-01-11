@@ -22,7 +22,7 @@ const updateNodemyRequest = ({ body }) => {
       throw new NodemyResponseError(400, 'Password must contain at least 8 characters!');
     }
 
-    if (typeof currentPassword !== 'string' || currentPassword.length < 8)) {
+    if (typeof currentPassword !== 'string' || currentPassword.length < 8) {
       throw new NodemyResponseError(400, 'Old password does not match!');
     }
   }
