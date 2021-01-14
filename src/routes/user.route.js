@@ -603,6 +603,29 @@ userRoute.patch('/users/become-teacher', authentication, rolesValidation(['Admin
   }
 });
 
+userRoute.patch('/users/become-student', authentication, rolesValidation(['Admin']), requestValidation(verifyUserId), async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.status(404).send({
+        error: 'Found no user!',
+      });
+    }
+
+    if (user.accountType === 'Teacher') {
+      user.accountType = 'Student';
+      await user.save();
+    }
+
+    res.status(204).send();
+  }
+  catch (error) {
+    res.status(500).send({
+      error: 'Internal Server Error',
+    });
+  }
+});
+
 userRoute.get('/users', authentication, rolesValidation(['Admin']), requestValidation(getUsersRequest), async (req, res) => {
   try {
     const usersPerPage = 24;
