@@ -101,17 +101,14 @@ courseRoute.get('/courses/me', authentication, rolesValidation(['Teacher', 'Admi
   }
 });
 
-courseRoute.get('/courses/admin', authentication, rolesValidation(['Admin']), requestValidation(getListCoursesRequest), async (req, res) => {
+courseRoute.get('/courses/admin', authentication, rolesValidation(['Admin']), async (req, res) => {
   try {
-    const listCourses = await Course.getListCourses(
-      false,
-      parseInt(req.query.page) || 1,
-      req.query.title,
-      req.query.category,
-      req.query.sort,
-      req.user,
-    );
-    res.send(listCourses);
+    const courses = await Course
+    .find()
+    .select('_id title summary tutor price sale category totalRatings createdAt averageRatings updatedAt isSuspended')
+    res.send({
+      courses,
+    });
   }
   catch (error) {
     console.log(error.message)
