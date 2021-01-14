@@ -220,10 +220,22 @@ lectureRoute.get('/lectures/:id/video', async (req, res) => {
         });
       }
 
-      for (let i = 0; i < user.boughtCourses.legnth; ++i) {
-        if (user.boughtCourses[i].courseId === lecture.courseId) {
-          hasBought = i;
-          break;
+      const course = await Course.findById(lecture.courseId);
+      if (!course) {
+        return res.status(404).send({
+          error: 'Found no course!',
+        });
+      }
+
+      if (user.accountType === 'Admin' || user._id.toString() === course.tutor) {
+        hasBought = 0;
+      }
+      else {
+        for (let i = 0; i < user.boughtCourses.legnth; ++i) {
+          if (user.boughtCourses[i].courseId === lecture.courseId) {
+            hasBought = i;
+            break;
+          }
         }
       }
     }
