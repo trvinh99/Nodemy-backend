@@ -34,9 +34,6 @@ lectureRoute.post('/lectures', authentication, rolesValidation(['Admin', 'Teache
   name: 'video',
   maxCount: 1,
 }, {
-  name: 'courseId',
-  maxCount: 1,
-}, {
   name: 'sectionId',
   maxCount: 1,
 }, {
@@ -47,22 +44,15 @@ lectureRoute.post('/lectures', authentication, rolesValidation(['Admin', 'Teache
   maxCount: 1,
 }]), requestValidation(createLectureRequest), async (req, res) => {
   try {
-    const course = await Course.findById(req.body.courseId);
-    if (!course || course.tutor !== req.user._id.toString()) {
-      return res.status(404).send({
-        error: 'Found no course!',
-      });
-    }
-
     const section = await CourseSection.findById(req.body.sectionId);
-    if (!section || section.courseId !== course._id.toString()) {
+    if (!section) {
       return res.status(404).send({
         error: 'Found no section!',
       });
     }
 
     const lecture = new CourseLecture({
-      courseId: req.body.courseId,
+      courseId: section.courseId,
       sectionId: req.body.sectionId,
       lectureName: req.body.lectureName,
       canPreview: req.body.canPreview === 'Yes',
