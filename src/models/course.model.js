@@ -110,6 +110,11 @@ const courseSchema = new mongoose.Schema({
     default: 0,
     required: true,
   },
+  isSuspended: {
+    type: Boolean,
+    default: false,
+    required: true,
+  },
 }, {
   timestamps: true,
 });

@@ -22,6 +22,18 @@ const Rating = require('../models/rating.model');
 
 const courseRoute = express.Router();
 
+courseRoute.post('/courses/suspend', async (_, res) => {
+  const courses = await Course.find();
+  for (let i = 0; i < courses.length; ++i) {
+    courses[i].isSuspended = false;
+    await courses[i].save();
+  }
+
+  res.send({
+    message: 'OK',
+  });
+});
+
 courseRoute.post('/courses', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(createCourseRequest), async (req, res) => {
   try {
     let coverImage = await downloader(req.body.coverImage);
@@ -68,6 +80,8 @@ courseRoute.get('/courses', bypassAuthentication, requestValidation(getListCours
       req.query.category,
       req.query.sort,
       req.user,
+      '',
+      { isSuspended: false }
     );
     res.send(listCourses);
   }
@@ -170,7 +184,7 @@ courseRoute.get('/courses/admin/:id', authentication, rolesValidation(['Admin'])
 courseRoute.get('/courses/top-viewed', bypassAuthentication, async (req, res) => {
   try {
     const courses = await Course
-    .find()
+    .find({ isSuspended: false })
     .select('_id title summary tutor price sale category totalRatings createdAt averageRatings updatedAt')
     .sort({ totalViewed: 'desc' })
     .limit(10);
@@ -193,7 +207,7 @@ courseRoute.get('/courses/top-viewed', bypassAuthentication, async (req, res) =>
 courseRoute.get('/courses/new', bypassAuthentication, async (req, res) => {
   try {
     let courses = await Course
-    .find({ isPublic: true })
+    .find({ isPublic: true, isSuspended: false })
     .select('_id title summary tutor price sale category totalRatings createdAt averageRatings updatedAt')
     .sort({ createdAt: 'desc' })
     .limit(10);
@@ -218,7 +232,7 @@ courseRoute.get('/courses/new', bypassAuthentication, async (req, res) => {
 courseRoute.get('/courses/hot', bypassAuthentication, async (req, res) => {
   try {
     let courses = await Course
-    .find()
+    .find({ isSuspended: false })
     .sort({ sale: 'desc' })
     .select('_id title summary tutor price sale category totalRatings createdAt averageRatings updatedAt')
     .limit(5);
@@ -242,7 +256,7 @@ courseRoute.get('/courses/hot', bypassAuthentication, async (req, res) => {
 courseRoute.get('/courses/:id', bypassAuthentication, requestValidation(getCourseRequest), async (req, res) => {
   try {
     let course = await Course.findById(req.params.id);
-    if (!course || !course.isPublic) {
+    if (!course || !course.isPublic || course.isSuspended) {
       return res.status(404).send({
         error: 'Found no course!',
       });
@@ -346,6 +360,28 @@ courseRoute.patch('/courses/:id', authentication, rolesValidation(['Teacher', 'A
     course.isInWishlist = false;
     course.isInCart = false;
 
+    res.send({
+      course,
+    });
+  }
+  catch (error) {
+    res.status(400).send({
+      error: error.message,
+    });
+  }
+});
+
+courseRoute.delete('/courses/admin/:id', authentication, rolesValidation(['Admin']), async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).send({
+        error: 'Found no course!',
+      });
+    }
+
+    course.isSuspended = true;
+    await course.save();
     res.send({
       course,
     });
