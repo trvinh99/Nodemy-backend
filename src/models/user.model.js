@@ -105,7 +105,6 @@ userSchema.methods.toJSON = function () {
   delete userObject.cart;
   delete userObject.boughtCourses;
   delete userObject.wishlist;
-  delete userObject.isBanned;
   delete userObject.createdAt;
   delete userObject.updatedAt;
   delete userObject.__v;
