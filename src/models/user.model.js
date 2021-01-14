@@ -110,7 +110,7 @@ userSchema.methods.toJSON = function () {
   delete userObject.updatedAt;
   delete userObject.__v;
 
-  userObject.avatar = `${process.env.HOST}/users/${user._id.toString()}/avatar`;
+  userObject.avatar = `${process.env.HOST}/users/${user._id.toString()}/avatar?t=${new Date().getTime()}`;
 
   return userObject;
 };

@@ -30,7 +30,7 @@ sectionRoute.get('/sections/me/:courseId', authentication, rolesValidation(['Tea
   catch (error) {
     res.status(500).send({ error: "Internal Server Error" });
   }
-})
+});
 
 sectionRoute.get('/sections/:courseId', requestValidation(getSectionsRequest), async (req, res) => {
   try {
