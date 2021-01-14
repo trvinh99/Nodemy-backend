@@ -22,18 +22,6 @@ const Rating = require('../models/rating.model');
 
 const courseRoute = express.Router();
 
-courseRoute.post('/courses/suspend', async (_, res) => {
-  const courses = await Course.find();
-  for (let i = 0; i < courses.length; ++i) {
-    courses[i].isSuspended = false;
-    await courses[i].save();
-  }
-
-  res.send({
-    message: 'OK',
-  });
-});
-
 courseRoute.post('/courses', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(createCourseRequest), async (req, res) => {
   try {
     let coverImage = await downloader(req.body.coverImage);
