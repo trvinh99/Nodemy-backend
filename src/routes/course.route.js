@@ -19,6 +19,7 @@ const downloader = require('../utils/downloader');
 const sendPurchasedNotification = require('../emails/sendPurchasedNotification.email');
 const bypassAuthentication = require('../middlewares/bypassAuthentication.middleware');
 const Rating = require('../models/rating.model');
+const User = require('../models/user.model');
 
 const courseRoute = express.Router();
 
@@ -105,7 +106,15 @@ courseRoute.get('/courses/admin', authentication, rolesValidation(['Admin']), as
   try {
     const courses = await Course
     .find()
-    .select('_id title summary tutor price sale category totalRatings createdAt averageRatings updatedAt isSuspended')
+    .select('_id title summary tutor price sale category totalRatings createdAt averageRatings updatedAt isSuspended');
+    for (let i = 0; i < courses.length; ++i) {
+      const user = await User.findById(courses[i].tutor);
+      courses[i].tutor = {
+        _id: user._id.toString(),
+        fullname: user.fullname,
+        email: user.email,
+      };
+    }
     res.send({
       courses,
     });
