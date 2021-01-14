@@ -19,7 +19,11 @@ const sectionRoute = express.Router();
 sectionRoute.get('/sections/me/:courseId', authentication, rolesValidation(['Teacher', 'Admin']), requestValidation(getSectionsRequest), async (req, res) => {
   try {
     const course = await Course.findById(req.params.courseId);
-    if (!course || course.tutor !== req.user._id.toString()) {
+    if (!course) {
+      return res.status(404).send({ error: `Found no course!` });
+    }
+
+    if (course.tutor !== req.user._id.toString() && req.user.accountType !== 'Admin') {
       return res.status(404).send({ error: `Found no course!` });
     }
 
